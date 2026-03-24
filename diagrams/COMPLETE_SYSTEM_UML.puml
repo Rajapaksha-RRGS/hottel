@@ -1,0 +1,312 @@
+@startuml Hotel_POS_Complete_System
+!theme plain
+title Vitamin See Hotel & POS System - Complete Class Diagram
+
+' ==================== ENUMERATIONS ====================
+enum UserRole {
+    ADMIN
+    WAITER
+    RECEPTIONIST
+}
+
+enum RoomStatus {
+    AVAILABLE
+    OCCUPIED
+    CLEANING
+    MAINTENANCE
+}
+
+enum BookingStatus {
+    PENDING
+    CONFIRMED
+    CHECKED_IN
+    CHECKED_OUT
+    CANCELLED
+}
+
+enum FoodCategory {
+    FOOD
+    BEVERAGE
+    BAR
+    DESSERT
+}
+
+enum OrderStatus {
+    PENDING
+    CONFIRMED
+    PREPARING
+    READY
+    SERVED
+    CANCELLED
+}
+
+enum TourStatus {
+    AVAILABLE
+    BOOKED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+enum PaymentStatus {
+    UNPAID
+    PARTIALLY_PAID
+    PAID
+    REFUNDED
+}
+
+enum PaymentMethod {
+    CASH
+    CARD
+    UPI
+    BANK_TRANSFER
+}
+
+' ==================== CORE ENTITIES ====================
+class User {
+    - UserID: String (PK)
+    - Name: String
+    - Email: String
+    - Password: String (hashed)
+    - Role: UserRole
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + login(email, password): Boolean
+    + updateProfile(data): void
+    + logout(): void
+}
+
+class Guest {
+    - GuestID: String (PK)
+    - FirstName: String
+    - LastName: String
+    - Email: String
+    - Phone: String
+    - PassportNo: String
+    - RoomNumber: String (current)
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + register(data): void
+    + updateProfile(data): void
+    + getCurrentBooking(): RoomBooking
+    + viewInvoice(): Invoice
+}
+
+' ==================== BOOKING MODULE ====================
+class Room {
+    - RoomID: String (PK)
+    - RoomNumber: String
+    - RoomType: String
+    - PricePerNight: Decimal
+    - Status: RoomStatus
+    - Amenities: String[]
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + updateStatus(status: RoomStatus): void
+    + getRoomDetails(): Room
+    + getBookingHistory(): RoomBooking[]
+    + isAvailable(checkIn, checkOut): Boolean
+}
+
+class RoomBooking {
+    - BookingID: String (PK)
+    - GuestID: String (FK)
+    - RoomID: String (FK)
+    - CheckInDate: DateTime
+    - CheckOutDate: DateTime
+    - Status: BookingStatus
+    - TotalAmount: Decimal
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - Notes: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + confirmBooking(): void
+    + cancelBooking(reason: String): void
+    + updateCheckInDate(date: DateTime): void
+    + getNumberOfNights(): Integer
+    + calculateTotalCost(): Decimal
+}
+
+' ==================== FOOD & BEVERAGE MODULE ====================
+class FoodItem {
+    - ItemID: String (PK)
+    - Name: String
+    - Category: FoodCategory
+    - Price: Decimal
+    - Description: String
+    - ImageURL: String
+    - IsAvailable: Boolean
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + updatePrice(newPrice: Decimal): void
+    + toggleAvailability(): void
+    + getDetails(): FoodItem
+}
+
+class FoodOrder {
+    - OrderID: String (PK)
+    - GuestID: String (FK)
+    - WaiterID: String (FK, Optional)
+    - OrderTime: DateTime
+    - Status: OrderStatus
+    - GrandTotal: Decimal
+    - Notes: String
+    - SpecialRequests: String
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + placeOrder(): void
+    + calculateOrderTotal(): Decimal
+    + updateStatus(status: OrderStatus): void
+    + cancelOrder(reason: String): void
+    + getOrderedBy(): String
+}
+
+class OrderItem {
+    - OrderItemID: String (PK)
+    - OrderID: String (FK)
+    - ItemID: String (FK)
+    - Quantity: Integer
+    - UnitPrice: Decimal
+    - SubTotal: Decimal
+    - CreatedAt: DateTime
+    --
+    + getItemTotal(): Decimal
+    + updateQuantity(qty: Integer): void
+}
+
+' ==================== TOUR MODULE ====================
+class TourPackage {
+    - TourID: String (PK)
+    - PackageName: String
+    - Description: String
+    - PricePerPerson: Decimal
+    - MaxGuests: Integer
+    - Duration: Integer (hours)
+    - Category: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + getTourDetails(): TourPackage
+    + updatePrice(newPrice: Decimal): void
+    + getAvailability(date: DateTime): Integer
+}
+
+class TourBooking {
+    - TourBookingID: String (PK)
+    - GuestID: String (FK)
+    - TourID: String (FK)
+    - BookingDate: DateTime
+    - TourDate: DateTime
+    - NoOfGuests: Integer
+    - TourTotal: Decimal
+    - Status: TourStatus
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + bookTour(): void
+    + cancelTour(reason: String): void
+    + modifyGuestCount(newCount: Integer): void
+    + calculateTourCost(): Decimal
+}
+
+' ==================== BILLING MODULE ====================
+class Invoice {
+    - InvoiceID: String (PK)
+    - GuestID: String (FK)
+    - RoomTotal: Decimal
+    - FoodTotal: Decimal
+    - TourTotal: Decimal
+    - Subtotal: Decimal
+    - ServiceChargePercentage: Decimal
+    - ServiceChargeAmount: Decimal
+    - TaxAmount: Decimal
+    - GrandTotal: Decimal
+    - PaymentStatus: PaymentStatus
+    - PaymentMethod: PaymentMethod
+    - TransactionID: String
+    - InvoiceDate: DateTime
+    - DueDate: DateTime
+    - PaidDate: DateTime
+    - Notes: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + generateInvoice(): void
+    + calculateGrandTotal(): Decimal
+    + calculateServiceCharge(): Decimal
+    + processPayment(method, amount): void
+    + printPDF(): PDF
+    + sendEmailReceipt(): void
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Booking Module
+Guest "1" -- "N" RoomBooking : places >
+Room "1" -- "N" RoomBooking : contains >
+
+' Food & Beverage Module
+Guest "1" -- "N" FoodOrder : places (self) >
+User "1" -- "N" FoodOrder : places (on behalf of) >
+FoodOrder "1" -- "N" OrderItem : contains >
+FoodItem "1" -- "N" OrderItem : appears in >
+
+' Tour Module
+Guest "1" -- "N" TourBooking : books >
+TourPackage "1" -- "N" TourBooking : offered as >
+
+' Billing Aggregation
+Guest "1" -- "1" Invoice : generates at checkout >
+RoomBooking "N" -- "1" Invoice : totaled in >
+FoodOrder "N" -- "1" Invoice : totaled in >
+TourBooking "N" -- "1" Invoice : totaled in >
+
+' ==================== SYSTEM NOTES ====================
+
+note right of FoodOrder
+    **CONFLICT RESOLUTION:**
+    - Removed redundant OrderedBy field
+    - Derives from WaiterID (NULL = Guest, else = Waiter)
+    - getOrderedBy() method implements logic
+end note
+
+note bottom of Invoice
+    **CONSOLIDATED BILLING:**
+    Aggregates three cost centers:
+    1. RoomTotal (from RoomBooking)
+    2. FoodTotal (from FoodOrder)
+    3. TourTotal (from TourBooking)
+    
+    Plus configurable service charge
+    Total = Room + Food + Tour + Service + Tax
+    
+    Generated at checkout (not continuously)
+end note
+
+note left of RoomBooking
+    **ROOM REUSABILITY:**
+    1:N per Room (reusable)
+    Room status cycles:
+    Available → Occupied → 
+    Cleaning → Available
+end note
+
+note top of User
+    **USER ROLES:**
+    - Admin: System management
+    - Waiter: Order handling
+    - Receptionist: Bookings/checkout
+end note
+
+@enduml

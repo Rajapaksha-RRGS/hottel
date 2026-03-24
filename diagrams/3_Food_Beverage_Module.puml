@@ -1,0 +1,127 @@
+@startuml Food_Beverage_Module
+!theme plain
+title Food & Beverage Module: Orders & Kitchen Workflow
+
+' Enumerations
+enum FoodCategory {
+    FOOD
+    BEVERAGE
+    BAR
+    DESSERT
+}
+
+enum OrderStatus {
+    PENDING
+    CONFIRMED
+    PREPARING
+    READY
+    SERVED
+    CANCELLED
+}
+
+' Classes
+class FoodItem {
+    - ItemID: String (PK)
+    - Name: String
+    - Category: FoodCategory
+    - Price: Decimal
+    - Description: String
+    - ImageURL: String
+    - IsAvailable: Boolean
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + updatePrice(newPrice: Decimal): void
+    + toggleAvailability(): void
+    + getDetails(): FoodItem
+}
+
+class FoodOrder {
+    - OrderID: String (PK)
+    - GuestID: String (FK)
+    - WaiterID: String (FK, Optional)
+    - OrderTime: DateTime
+    - Status: OrderStatus
+    - GrandTotal: Decimal
+    - Notes: String
+    - SpecialRequests: String
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + placeOrder(): void
+    + calculateOrderTotal(): Decimal
+    + updateStatus(status: OrderStatus): void
+    + cancelOrder(reason: String): void
+    + getOrderedBy(): String (derives as: WaiterID ? "Waiter" : "Guest")
+}
+
+class OrderItem {
+    - OrderItemID: String (PK)
+    - OrderID: String (FK)
+    - ItemID: String (FK)
+    - Quantity: Integer
+    - UnitPrice: Decimal
+    - SubTotal: Decimal
+    - CreatedAt: DateTime
+    --
+    + getItemTotal(): Decimal
+    + updateQuantity(qty: Integer): void
+}
+
+class User {
+    - UserID: String (PK)
+    - Name: String
+    - Email: String
+    - Role: UserRole
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + login(email, password): Boolean
+    + updateOrderStatus(orderID, status): void
+    + takeOrder(guestID, items): FoodOrder
+}
+
+class Guest {
+    - GuestID: String (PK)
+    - FirstName: String
+    - LastName: String
+    - Email: String
+    - Phone: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + placeOrder(items): FoodOrder
+    + viewOrderHistory(): FoodOrder[]
+}
+
+' Relationships
+FoodOrder "1" -- "N" OrderItem : contains >
+FoodItem "1" -- "N" OrderItem : appears in >
+
+Guest "1" -- "N" FoodOrder : places (guest-initiated) >
+User "1" -- "N" FoodOrder : places (waiter-initiated) >
+
+note right of FoodOrder
+    Dual-mode ordering:
+    - If WaiterID = NULL → Guest self-order
+    - If WaiterID = populated → Waiter-assisted order
+    Method getOrderedBy() derives source
+    from WaiterID presence (eliminates
+    redundant OrderedBy field)
+end note
+
+note bottom of OrderItem
+    Maintains unit price snapshot
+    at order time (prices may change
+    after ordering)
+end note
+
+note top of FoodItem
+    Menu management with
+    real-time availability
+    and price updates
+end note
+
+@enduml

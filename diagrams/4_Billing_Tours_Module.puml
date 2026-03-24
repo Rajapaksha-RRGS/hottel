@@ -1,0 +1,169 @@
+@startuml Billing_Tours_Module
+!theme plain
+title Billing & Tours Module: Tours, Bookings & Consolidated Invoice
+
+' Enumerations
+enum TourStatus {
+    AVAILABLE
+    BOOKED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+enum PaymentStatus {
+    UNPAID
+    PARTIALLY_PAID
+    PAID
+    REFUNDED
+}
+
+enum PaymentMethod {
+    CASH
+    CARD
+    UPI
+    BANK_TRANSFER
+    CRYPTOCURRENCY
+}
+
+' Classes
+class TourPackage {
+    - TourID: String (PK)
+    - PackageName: String
+    - Description: String
+    - PricePerPerson: Decimal
+    - MaxGuests: Integer
+    - Duration: Integer (hours)
+    - Category: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + getTourDetails(): TourPackage
+    + updatePrice(newPrice: Decimal): void
+    + getAvailability(date: DateTime): Integer
+}
+
+class TourBooking {
+    - TourBookingID: String (PK)
+    - GuestID: String (FK)
+    - TourID: String (FK)
+    - BookingDate: DateTime
+    - TourDate: DateTime
+    - NoOfGuests: Integer
+    - TourTotal: Decimal
+    - Status: TourStatus
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + bookTour(): void
+    + cancelTour(reason: String): void
+    + modifyGuestCount(newCount: Integer): void
+    + calculateTourCost(): Decimal
+}
+
+class Guest {
+    - GuestID: String (PK)
+    - FirstName: String
+    - LastName: String
+    - Email: String
+    - Phone: String
+    - PassportNo: String
+    - RoomNumber: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + bookTour(tourID, noOfGuests): TourBooking
+    + viewTourBookings(): TourBooking[]
+}
+
+class RoomBooking {
+    - BookingID: String (PK)
+    - GuestID: String (FK)
+    - RoomID: String (FK)
+    - CheckInDate: DateTime
+    - CheckOutDate: DateTime
+    - TotalAmount: Decimal
+    - Status: String
+    - CreatedAt: DateTime
+}
+
+class FoodOrder {
+    - OrderID: String (PK)
+    - GuestID: String (FK)
+    - GrandTotal: Decimal
+    - Status: String
+    - CreatedAt: DateTime
+}
+
+class Invoice {
+    - InvoiceID: String (PK)
+    - GuestID: String (FK)
+    - RoomTotal: Decimal (sum of room bookings)
+    - FoodTotal: Decimal (sum of food orders)
+    - TourTotal: Decimal (sum of tour bookings)
+    - Subtotal: Decimal
+    - ServiceChargePercentage: Decimal (%)
+    - ServiceChargeAmount: Decimal
+    - TaxAmount: Decimal (optional)
+    - GrandTotal: Decimal
+    - PaymentStatus: PaymentStatus
+    - PaymentMethod: PaymentMethod
+    - TransactionID: String
+    - InvoiceDate: DateTime
+    - DueDate: DateTime
+    - PaidDate: DateTime (optional)
+    - Notes: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + generateInvoice(): void
+    + calculateGrandTotal(): Decimal
+    + calculateServiceCharge(rate: Decimal): Decimal
+    + processPayment(method: PaymentMethod, amount: Decimal): void
+    + printPDF(): PDF
+    + sendEmailReceipt(): void
+}
+
+' Relationships
+Guest "1" -- "N" TourBooking : books >
+TourPackage "1" -- "N" TourBooking : offered as >
+
+Guest "1" -- "1" Invoice : generates at checkout >
+RoomBooking "N" -- "1" Invoice : totaled in >
+FoodOrder "N" -- "1" Invoice : totaled in >
+TourBooking "N" -- "1" Invoice : totaled in >
+
+note right of Invoice
+    Consolidated billing generated at checkout
+    Aggregates 3 modules:
+    - RoomTotal (from RoomBooking)
+    - FoodTotal (from FoodOrder)
+    - TourTotal (from TourBooking)
+    + Service Charge (configurable %)
+    = GrandTotal
+    
+    Supports multiple payment methods
+    and partial payment tracking
+end note
+
+note bottom of TourBooking
+    Maintains tour date separate from
+    booking date; allows time between
+    booking and actual tour execution
+end note
+
+note top of TourPackage
+    Pigeon Island, Kandy, etc.
+    Configurable pricing and
+    guest capacity per tour
+end note
+
+note left of PaymentStatus
+    Evolution:
+    UNPAID → PARTIALLY_PAID → PAID
+    or PAID → REFUNDED (cancellation)
+end note
+
+@enduml

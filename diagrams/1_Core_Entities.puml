@@ -1,0 +1,57 @@
+@startuml Core_Entities
+!theme plain
+title Core Entities: Users & Guests
+
+' Enumerations
+enum UserRole {
+    ADMIN
+    WAITER
+    RECEPTIONIST
+}
+
+' Classes
+class User {
+    - UserID: String (PK)
+    - Name: String
+    - Email: String
+    - Password: String (hashed)
+    - Role: UserRole
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + login(email, password): Boolean
+    + updateProfile(name, email): void
+    + getRole(): UserRole
+}
+
+class Guest {
+    - GuestID: String (PK)
+    - FirstName: String
+    - LastName: String
+    - Email: String
+    - Phone: String
+    - PassportNo: String
+    - RoomNumber: String (current room)
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + register(data): void
+    + updateProfile(data): void
+    + viewInvoice(): Invoice
+    + getCurrentBooking(): RoomBooking
+}
+
+' Relationships
+note right of User
+    Staff members who manage:
+    - Admin: Full system access
+    - Waiter: Order management
+    - Receptionist: Bookings & checkout
+end note
+
+note right of Guest
+    Hotel guests with self-service
+    capabilities and order history
+end note
+
+@enduml

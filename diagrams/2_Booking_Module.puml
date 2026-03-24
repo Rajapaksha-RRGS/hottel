@@ -1,0 +1,94 @@
+@startuml Booking_Module
+!theme plain
+title Booking Module: Rooms & Reservations
+
+' Enumerations
+enum RoomStatus {
+    AVAILABLE
+    OCCUPIED
+    CLEANING
+    MAINTENANCE
+}
+
+enum BookingStatus {
+    PENDING
+    CONFIRMED
+    CHECKED_IN
+    CHECKED_OUT
+    CANCELLED
+}
+
+' Classes
+class Room {
+    - RoomID: String (PK)
+    - RoomNumber: String
+    - RoomType: String (Single/Double/Suite)
+    - PricePerNight: Decimal
+    - Status: RoomStatus
+    - Amenities: String[]
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + updateStatus(status: RoomStatus): void
+    + getRoomDetails(): Room
+    + getBookingHistory(): RoomBooking[]
+    + isAvailable(checkIn, checkOut): Boolean
+}
+
+class Guest {
+    - GuestID: String (PK)
+    - FirstName: String
+    - LastName: String
+    - Email: String
+    - Phone: String
+    - PassportNo: String
+    - RoomNumber: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + register(data): void
+    + updateProfile(data): void
+    + viewInvoice(): Invoice
+}
+
+class RoomBooking {
+    - BookingID: String (PK)
+    - GuestID: String (FK)
+    - RoomID: String (FK)
+    - CheckInDate: DateTime
+    - CheckOutDate: DateTime
+    - Status: BookingStatus
+    - TotalAmount: Decimal
+    - CancellationReason: String
+    - CancelledAt: DateTime
+    - Notes: String
+    - CreatedAt: DateTime
+    - UpdatedAt: DateTime
+    --
+    + confirmBooking(): void
+    + cancelBooking(reason: String): void
+    + updateCheckInDate(date: DateTime): void
+    + getNumberOfNights(): Integer
+    + calculateTotalCost(): Decimal
+}
+
+' Relationships
+Guest "1" -- "N" RoomBooking : places >
+Room "1" -- "N" RoomBooking : involves >
+
+note right of RoomBooking
+    One booking per stay
+    Room reusable after checkout
+    Status transitions: 
+    PENDING → CONFIRMED → 
+    CHECKED_IN → CHECKED_OUT/CANCELLED
+end note
+
+note bottom of Room
+    Rooms tracked independently
+    Status updated on each booking
+    cycle (Available → Occupied → 
+    Cleaning → Available)
+end note
+
+@enduml
