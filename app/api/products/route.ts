@@ -1,28 +1,25 @@
 import { NextResponse } from "next/server";
-import { Db } from "@/lib/db";
+import { connectDB } from "@/lib/mongoose";
+import Product from "@/models/Product";
 
 export async function GET() {
   try {
-    const db = await Db();
-    const products = await db
-      .collection("products")
-      .find({})
-      .limit(20)
-      .toArray();
+    await connectDB();
+    const products = await Product.find({}).limit(20);
 
     return NextResponse.json({
       ok: true,
       data: products,
       message: "Products fetched successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       {
         ok: false,
         message: "Failed to fetch products",
-        error: String(error),
+        error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,16 +1,30 @@
 import { NextResponse } from "next/server";
-import { Db } from "@/lib/db";
+import { connectDB } from "@/lib/mongoose";
 
 export async function GET() {
   try {
-    const db = await Db();
-    await db.command({ ping: 1 });
+    const connection = await connectDB();
 
-    return NextResponse.json({ ok: true, message: "MongoDB connected" });
-  } catch (error) {
+    // Check connection readyState (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)
+    if (connection.connection.readyState === 1) {
+      return NextResponse.json({
+        ok: true,
+        message: "MongoDB connected successfully",
+      });
+    } else {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "MongoDB not connected",
+          readyState: connection.connection.readyState,
+        },
+        { status: 500 },
+      );
+    }
+  } catch (error: any) {
     return NextResponse.json(
-      { ok: false, message: "MongoDB connection failed", error: String(error) },
-      { status: 500 }
+      { ok: false, message: "MongoDB connection failed", error: error.message },
+      { status: 500 },
     );
   }
 }
