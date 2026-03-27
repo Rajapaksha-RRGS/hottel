@@ -24,6 +24,7 @@ export default function LoginPage() {
     const result = await signIn("credentials", {
       email,
       password,
+
       redirect: false,
     });
 
@@ -39,16 +40,18 @@ export default function LoginPage() {
     const role = (session?.user as any)?.role; // Meeta kalin NextAuth config eke role eka setup karala thiyenna ona
 
     setLoading(false);
+    console.log("User role:", role); // Role eka console log karanna
 
     // Role eka anuwa redirect kirima
-    if (role === "admin") {
+    if (role === "Admin") {
       router.push("/admin/dashboard");
     } else if (role === "Waiter") {
       router.push("/waiter/dashboard");
     } else if (role === "Receptionist") {
       router.push("/receptionist/dashboard");
     } else {
-      router.push("/dashboard"); // Default dashboard
+      router.push("/");
+      console.log("Default dashboard"); // Default dashboard
     }
     router.refresh();
   };

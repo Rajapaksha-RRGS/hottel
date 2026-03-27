@@ -1,4 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
 import { UserRole } from "@/lib/type";
@@ -6,11 +8,21 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authorization header (admin only)
-    const userRole = request.headers.get("user-role");
+    // Get session with auth options
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized: Please login first" },
+        { status: 401 },
+      );
+    }
+
+    const userRole = (session.user as any)?.role;
+
     if (userRole !== "Admin") {
       return NextResponse.json(
-        { error: "Unauthorized: Admin access required" },
+        { error: `Unauthorized: Admin access required. Your role is: ${userRole}` },
         { status: 403 },
       );
     }
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password with bcrypt (10 salt rounds - also handled by pre-save hook)
+    // Hash password with bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
@@ -125,8 +137,18 @@ export async function POST(request: NextRequest) {
 // GET endpoint to fetch all staff (admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Check authorization
-    const userRole = request.headers.get("user-role");
+    // Get session with auth options
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized: Please login first" },
+        { status: 401 },
+      );
+    }
+
+    const userRole = (session.user as any)?.role;
+
     if (userRole !== "Admin") {
       return NextResponse.json(
         { error: "Unauthorized: Admin access required" },
