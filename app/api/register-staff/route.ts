@@ -22,7 +22,9 @@ export async function POST(request: NextRequest) {
 
     if (userRole !== "Admin") {
       return NextResponse.json(
-        { error: `Unauthorized: Admin access required. Your role is: ${userRole}` },
+        {
+          error: `Unauthorized: Admin access required. Your role is: ${userRole}`,
+        },
         { status: 403 },
       );
     }

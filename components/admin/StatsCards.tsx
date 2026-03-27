@@ -2,42 +2,102 @@
 
 import { CalendarCheck, BarChart3, DollarSign, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from "react";
 
-const stats = [
-  {
-    title: 'Total Bookings',
-    value: '2,847',
-    change: '+12%',
-    icon: CalendarCheck,
-    description: 'from last month',
-  },
-  {
-    title: 'Occupancy Rate',
-    value: '87.4%',
-    change: '+8%',
-    icon: BarChart3,
-    description: 'from last month',
-  },
-  {
-    title: 'Total Revenue',
-    value: '$384,520',
-    change: '+15%',
-    icon: DollarSign,
-    description: 'from last month',
-  },
-  {
-    title: 'Active Guests',
-    value: '642',
-    change: '+5%',
-    icon: Users,
-    description: 'from last month',
-  },
-];
+interface StatsData {
+  totalBookings: number;
+  totalRooms: number;
+  activeGuests: number;
+  revenue: string;
+  occupancyRate: string;
+}
+
+interface StatCard {
+  title: string;
+  value: string | number;
+  icon: any;
+  description: string;
+}
 
 export default function StatsCards() {
+  const [stats, setStats] = useState<StatCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/admin/stats", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-  
+        if (!response.ok) {
+          throw new Error("Failed to fetch stats");
+        }
+
+        const data = await response.json();
+        const statsData: StatsData = data.stats;
+
+        const formattedStats: StatCard[] = [
+          {
+            title: "Total Bookings",
+            value: statsData.totalBookings,
+            icon: CalendarCheck,
+            description: "total bookings",
+          },
+          {
+            title: "Occupancy Rate",
+            value: statsData.occupancyRate,
+            icon: BarChart3,
+            description: "current rate",
+          },
+          {
+            title: "Total Revenue",
+            value: `$${parseFloat(statsData.revenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            icon: DollarSign,
+            description: "total earned",
+          },
+          {
+            title: "Active Guests",
+            value: statsData.activeGuests,
+            icon: Users,
+            description: "checked in",
+          },
+        ];
+
+        setStats(formattedStats);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+        setError("Failed to load stats");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        {[...Array(4)].map((_, index) => (
+          <div
+            key={index}
+            className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-6 animate-pulse"
+          >
+            <div className="h-6 bg-slate-700 rounded mb-4 w-3/4"></div>
+            <div className="h-10 bg-slate-700 rounded mb-3 w-1/2"></div>
+            <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
       {stats.map((stat, index) => {
@@ -54,11 +114,14 @@ export default function StatsCards() {
           >
             <div className="flex items-start justify-between">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-400">{stat.title}</p>
-                <p className="text-3xl font-bold text-white tracking-tight">{stat.value}</p>
-                <p className="text-xs text-emerald-400 font-medium">
-                  {stat.change}{' '}
-                  <span className="text-slate-500">{stat.description}</span>
+                <p className="text-sm font-medium text-slate-400">
+                  {stat.title}
+                </p>
+                <p className="text-3xl font-bold text-white tracking-tight">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-slate-400 font-medium">
+                  {stat.description}
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-slate-800/60 group-hover:bg-amber-500/10 transition-colors duration-300">

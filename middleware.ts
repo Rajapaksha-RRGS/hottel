@@ -14,6 +14,9 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api/staff")) {
     return NextResponse.next();
   }
+  if (request.nextUrl.pathname.startsWith("/api/admin")) {
+    return NextResponse.next();
+  }
   if (!token) {
     // 3. Token එකක් නැතිනම් Error එකක් යැවීම
     return NextResponse.json(
