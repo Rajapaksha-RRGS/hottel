@@ -11,12 +11,14 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/auth')) {
     return NextResponse.next();
   }
-
-  // 3. Token එකක් නැතිනම් Error එකක් යැවීම
+  if (request.nextUrl.pathname.startsWith("/api/staff")) {
+    return NextResponse.next();
+  }
   if (!token) {
+    // 3. Token එකක් නැතිනම් Error එකක් යැවීම
     return NextResponse.json(
       { error: "Unauthorized: No token provided" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
