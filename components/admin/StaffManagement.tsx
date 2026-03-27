@@ -3,12 +3,14 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, Users, Trash2, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { get } from "node:http";
+import { useEffect } from "react";
 
 interface StaffMember {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Waiter' | 'Receptionist' | 'Manager';
+  role: "Admin" | "Waiter" | "Receptionist" | "Manager";
   createdAt: string;
 }
 
@@ -16,21 +18,21 @@ interface FormState {
   name: string;
   email: string;
   password: string;
-  role: 'Admin' | 'Waiter' | 'Receptionist' | 'Manager';
+  role: "Admin" | "Waiter" | "Receptionist" | "Manager";
 }
 
 interface Toast {
   id: string;
-  type: 'success' | 'error';
+  type: "success" | "error";
   message: string;
 }
 
 export default function StaffManagement() {
   const [formData, setFormData] = useState<FormState>({
-    name: '',
-    email: '',
-    password: '',
-    role: 'Waiter',
+    name: "",
+    email: "",
+    password: "",
+    role: "Waiter",
   });
 
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
@@ -39,7 +41,11 @@ export default function StaffManagement() {
   const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  useEffect(() => {
+    getStaffList();
+  }, []);
+
+  const showToast = (message: string, type: "success" | "error") => {
     const id = Date.now().toString();
     const newToast: Toast = { id, message, type };
     setToasts((prev) => [...prev, newToast]);
@@ -50,7 +56,7 @@ export default function StaffManagement() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -58,15 +64,15 @@ export default function StaffManagement() {
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      showToast('Name is required', 'error');
+      showToast("Name is required", "error");
       return false;
     }
-    if (!formData.email.includes('@')) {
-      showToast('Valid email is required', 'error');
+    if (!formData.email.includes("@")) {
+      showToast("Valid email is required", "error");
       return false;
     }
     if (formData.password.length < 6) {
-      showToast('Password must be at least 6 characters', 'error');
+      showToast("Password must be at least 6 characters", "error");
       return false;
     }
     return true;
@@ -80,54 +86,62 @@ export default function StaffManagement() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/register-staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/register-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to register staff');
+        throw new Error(data.error || "Failed to register staff");
       }
 
-      showToast(`✓ ${formData.name} registered successfully!`, 'success');
+      showToast(`✓ ${formData.name} registered successfully!`, "success");
 
       // Add to local list
-      setStaffList((prev) => [
-        ...prev,
-        {
-          id: data.user._id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
-          createdAt: new Date().toLocaleDateString(),
-        },
-      ]);
+      getStaffList();
 
       // Reset form
-      setFormData({ name: '', email: '', password: '', role: 'Waiter' });
+      setFormData({ name: "", email: "", password: "", role: "Waiter" });
       setShowForm(false);
     } catch (error: any) {
-      showToast(error.message || 'An error occurred', 'error');
+      showToast(error.message || "An error occurred", "error");
     } finally {
       setLoading(false);
     }
   };
 
+  const getStaffList = async () => {
+    try {
+      const response = await fetch("/api/register-staff");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch staff list");
+      }
+      setStaffList(data.staff);
+      console.log("Fetched staff list:", data.staff);
+    } catch (error: any) {
+      showToast(
+        error.message || "An error occurred while fetching staff",
+        "error",
+      );
+    }
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'Admin':
-        return 'bg-purple-500/10 text-purple-400 border border-purple-500/30';
-      case 'Waiter':
-        return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
-      case 'Receptionist':
-        return 'bg-green-500/10 text-green-400 border border-green-500/30';
-      case 'Manager':
-        return 'bg-orange-500/10 text-orange-400 border border-orange-500/30';
+      case "Admin":
+        return "bg-purple-500/10 text-purple-400 border border-purple-500/30";
+      case "Waiter":
+        return "bg-blue-500/10 text-blue-400 border border-blue-500/30";
+      case "Receptionist":
+        return "bg-green-500/10 text-green-400 border border-green-500/30";
+      case "Manager":
+        return "bg-orange-500/10 text-orange-400 border border-orange-500/30";
       default:
-        return 'bg-slate-500/10 text-slate-400 border border-slate-500/30';
+        return "bg-slate-500/10 text-slate-400 border border-slate-500/30";
     }
   };
 
@@ -142,12 +156,12 @@ export default function StaffManagement() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl backdrop-blur-sm border pointer-events-auto ${
-              toast.type === 'success'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                : 'bg-red-500/10 border-red-500/30 text-red-400'
+              toast.type === "success"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                : "bg-red-500/10 border-red-500/30 text-red-400"
             }`}
           >
-            {toast.type === 'success' ? (
+            {toast.type === "success" ? (
               <CheckCircle className="w-5 h-5 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -160,7 +174,9 @@ export default function StaffManagement() {
       {/* Header with Action Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-white mb-1">Staff Management</h3>
+          <h3 className="text-2xl font-bold text-white mb-1">
+            Staff Management
+          </h3>
           <p className="text-slate-400 text-sm">
             Register and manage hotel staff members
           </p>
@@ -321,7 +337,7 @@ export default function StaffManagement() {
               <tbody>
                 {staffList.map((staff, index) => (
                   <motion.tr
-                    key={staff.id}
+                    key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
@@ -339,14 +355,16 @@ export default function StaffManagement() {
                     <td className="px-6 py-4">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                          staff.role
+                          staff.role,
                         )}`}
                       >
                         {staff.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-slate-400 text-sm">{staff.createdAt}</p>
+                      <p className="text-slate-400 text-sm">
+                        {staff.createdAt}
+                      </p>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200">
