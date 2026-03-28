@@ -22,8 +22,8 @@ import {
   Globe,
   MessageCircle,
   Heart,
-  Link,
 } from "lucide-react";
+import Link from "next/link";
 import UserProfile from "./components/UseProfile";
 
 // Navigation Component
@@ -40,7 +40,7 @@ const Navigation = () => {
   }, []);
 
   const navLinks = [
-    { name: "Rooms", to: "/rooms" },
+    { name: "Rooms", to: "/Rooms" },
     { name: "Dining", to: "/dining" },
     { name: "Spa", to: "/spa" },
     { name: "Experiences", to: "/experiences" },
@@ -102,7 +102,7 @@ const Navigation = () => {
           {navLinks.map((link) => (
             <a
               key={link.name}
-              href={link.href}
+              href={link.to}
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-bone/80 hover:text-gold transition-colors duration-300 text-sm tracking-wide uppercase py-2"
             >
