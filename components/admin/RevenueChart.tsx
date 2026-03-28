@@ -10,21 +10,42 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useEffect, useState } from "react";
 
-const data = [
-  { month: 'Jan', revenue: 32000, lastYear: 28000 },
-  { month: 'Feb', revenue: 38000, lastYear: 30000 },
-  { month: 'Mar', revenue: 42000, lastYear: 35000 },
-  { month: 'Apr', revenue: 35000, lastYear: 32000 },
-  { month: 'May', revenue: 48000, lastYear: 38000 },
-  { month: 'Jun', revenue: 52000, lastYear: 42000 },
-  { month: 'Jul', revenue: 58000, lastYear: 45000 },
-  { month: 'Aug', revenue: 55000, lastYear: 48000 },
-  { month: 'Sep', revenue: 62000, lastYear: 50000 },
-  { month: 'Oct', revenue: 68000, lastYear: 55000 },
-  { month: 'Nov', revenue: 72000, lastYear: 58000 },
-  { month: 'Dec', revenue: 78000, lastYear: 62000 },
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
+
+interface StatsData {
+  totalBookings: number;
+  totalRooms: number;
+  activeGuests: number;
+  revenue: string;
+  occupancyRate: string;
+  monthlyRoomData: Array<{
+    _id: { year: number; month: number };
+    total: number;
+  }>;
+  monthlyFoodData: Array<{
+    _id: { year: number; month: number };
+    total: number;
+  }>;
+  monthlyTourData: Array<{
+    _id: { year: number; month: number };
+    total: number;
+  }>;
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -46,6 +67,106 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function RevenueChart() {
+  const [chartData, setChartData] = useState<
+    Array<{ month: string; revenue: number; lastYear: number }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/admin/stats");
+        const data = await res.json();
+
+        if (data.success && data.stats) {
+          const stats: StatsData = data.stats;
+
+          // Combine room, food, and tour revenue by month
+          const monthlyRevenue: Record<number, number> = {};
+
+          // Add room revenue
+          stats.monthlyRoomData.forEach((item) => {
+            const month = item._id.month;
+            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
+          });
+
+          // Add food revenue
+          stats.monthlyFoodData.forEach((item) => {
+            const month = item._id.month;
+            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
+          });
+
+          // Add tour revenue
+          stats.monthlyTourData.forEach((item) => {
+            const month = item._id.month;
+            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
+          });
+
+          // Transform to chart format with both current and last year data
+          const currentYear = new Date().getFullYear();
+          const lastYear = currentYear - 1;
+
+          // Filter data for current year and last year
+          const currentYearData = stats.monthlyRoomData.filter(
+            (item) => item._id.year === currentYear,
+          );
+          const lastYearData = stats.monthlyRoomData.filter(
+            (item) => item._id.year === lastYear,
+          );
+
+          // Create lookup maps
+          const currentYearMap: Record<number, number> = {};
+          const lastYearMap: Record<number, number> = {};
+
+          currentYearData.forEach((item) => {
+            currentYearMap[item._id.month] = item.total;
+          });
+
+          lastYearData.forEach((item) => {
+            lastYearMap[item._id.month] = item.total;
+          });
+
+          // Build chart data for all 12 months
+          const formattedData = monthNames.map((monthName, index) => {
+            const monthNum = index + 1;
+            const currentRevenue = currentYearMap[monthNum] || 0;
+            const lastRevenue = lastYearMap[monthNum] || 0;
+            return {
+              month: monthName,
+              revenue: currentRevenue,
+              lastYear: lastRevenue,
+            };
+          });
+
+          setChartData(formattedData);
+        } else {
+          // Fallback to placeholder data
+          setChartData(
+            monthNames.map((month) => ({
+              month,
+              revenue: 0,
+              lastYear: 0,
+            })),
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        // Fallback to placeholder data
+        setChartData(
+          monthNames.map((month) => ({
+            month,
+            revenue: 0,
+            lastYear: 0,
+          })),
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -56,7 +177,9 @@ export default function RevenueChart() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-white">Revenue Overview</h3>
-          <p className="text-sm text-slate-400 mt-1">Monthly revenue performance</p>
+          <p className="text-sm text-slate-400 mt-1">
+            Monthly revenue performance
+          </p>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
@@ -71,24 +194,31 @@ export default function RevenueChart() {
       </div>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+          <AreaChart
+            data={chartData}
+            margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="amberGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#1e293b"
+              vertical={false}
+            />
             <XAxis
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: "#64748b", fontSize: 12 }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: "#64748b", fontSize: 12 }}
               tickFormatter={(v) => `$${v / 1000}k`}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -107,11 +237,21 @@ export default function RevenueChart() {
               strokeWidth={2.5}
               fill="url(#amberGradient)"
               dot={false}
-              activeDot={{ r: 5, fill: '#f59e0b', stroke: '#0f172a', strokeWidth: 2 }}
+              activeDot={{
+                r: 5,
+                fill: "#f59e0b",
+                stroke: "#0f172a",
+                strokeWidth: 2,
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 rounded-2xl">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </motion.div>
   );
 }

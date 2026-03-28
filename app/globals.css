@@ -1,6 +1,126 @@
 @import "tailwindcss";
 
+@theme {
+  --color-charcoal: #1A1A1A;
+  --color-bone: #F5F5F7;
+  --color-gold: #C5A059;
+  --color-gold-light: #D4B76A;
+  --color-gold-dark: #A68A45;
+
+  --font-family-sans: var(--font-inter), system-ui, sans-serif;
+  --font-family-serif: var(--font-playfair), Georgia, serif;
+
+  --animate-pulse-slow: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  @apply bg-gray-100 text-gray-800;
-  
+  background-color: #1A1A1A;
+  color: #F5F5F7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 245, 247, 0.1);
+}
+
+.glass-light {
+  background: rgba(245, 245, 247, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 245, 247, 0.15);
+}
+
+.glass-gold {
+  background: rgba(197, 160, 89, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+}
+
+/* Pulsing availability dot */
+@keyframes availabilityPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.availability-dot {
+  animation: availabilityPulse 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A1A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5A059;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4B76A;
+}
+
+/* Text selection */
+::selection {
+  background: rgba(197, 160, 89, 0.3);
+  color: #F5F5F7;
+}
+
+/* Hero video overlay */
+.hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(26, 26, 26, 0.4) 0%,
+    rgba(26, 26, 26, 0.2) 50%,
+    rgba(26, 26, 26, 0.8) 100%
+  );
+}
+
+/* Gold text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #C5A059 0%, #D4B76A 50%, #C5A059 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Luxury border */
+.border-luxury {
+  border-image: linear-gradient(135deg, rgba(197, 160, 89, 0.5), rgba(197, 160, 89, 0.1)) 1;
+}
+
+/* Select option styling for dark theme */
+select option {
+  background-color: #1A1A1A;
+  color: #F5F5F7;
 }
