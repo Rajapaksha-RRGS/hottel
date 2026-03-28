@@ -8,7 +8,7 @@ const Header = () => {
 
   return (
     <header className="fixed w-full z-50 top-0 bg-white backdrop-blur-sm transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-6 py-1 flex justify-between items-center">
+      <div className="max-w-full mx-auto px-6 py-4 flex  items-center">
         {/* Logo */}
         <div className="flex flex-col">
           <span className="text-xl font-bold tracking-wider text-gray-800">
@@ -45,7 +45,7 @@ const Header = () => {
         </nav>
 
         {/* User Profile Dropdown */}
-        <div className="relative">
+        <div className="relative ml-auto mr-5">
           <UserProfile />
         </div>
       </div>
