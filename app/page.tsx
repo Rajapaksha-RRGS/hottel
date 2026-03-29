@@ -1,6 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Navigation from "@/app/components/Herder";
+import Link from "next/link";
+import { useSearch } from "@/context/SearchContext";
+import Footer from "./components/Footer";
+
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
   Menu,
@@ -23,103 +29,11 @@ import {
   MessageCircle,
   Heart,
 } from "lucide-react";
-import Link from "next/link";
+
 import UserProfile from "./components/UseProfile";
 
 // Navigation Component
-const Navigation = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const navLinks = [
-    { name: "Rooms", to: "/Rooms" },
-    { name: "Dining", to: "/dining" },
-    { name: "Spa", to: "/spa" },
-    { name: "Experiences", to: "/experiences" },
-    { name: "Contact", to: "/contact" },
-  ];
-
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "glass py-4" : "bg-transparent py-6"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2">
-          <span className="font-serif text-2xl md:text-3xl text-gold tracking-wider">
-            VTAMIN SEE
-          </span>
-          <span className="hidden md:block text-bone/60 text-sm tracking-[0.3em] uppercase">
-            Hotel & Hostel
-          </span>
-        </a>
-
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.to}
-              className="text-bone/80 hover:text-gold transition-colors duration-300 text-sm tracking-wide uppercase"
-            >
-              {link.name}
-            </Link>
-          ))}
-          <UserProfile />
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="lg:hidden text-bone p-2"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      <motion.div
-        initial={false}
-        animate={{
-          height: isMobileMenuOpen ? "auto" : 0,
-          opacity: isMobileMenuOpen ? 1 : 0,
-        }}
-        className="lg:hidden overflow-hidden glass"
-      >
-        <div className="px-6 py-4 flex flex-col gap-4">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.to}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-bone/80 hover:text-gold transition-colors duration-300 text-sm tracking-wide uppercase py-2"
-            >
-              {link.name}
-            </a>
-          ))}
-          <a
-            href="#booking"
-            className="mt-2 px-6 py-3 bg-gold text-charcoal font-medium text-sm tracking-wide uppercase text-center"
-          >
-            Book Now
-          </a>
-        </div>
-      </motion.div>
-    </motion.nav>
-  );
-};
 
 // Hero Section Component
 const HeroSection = () => {
@@ -480,14 +394,45 @@ const AmenitiesSection = () => {
 
 // Booking Bar Component
 const BookingBar = () => {
+  const router = useRouter();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("2 Adults");
+  const [error, setError] = useState("");
+  const { setSearchData } = useSearch();
+
+  const handleCheckAvailability = () => {
+    setError("");
+
+    // Validate dates
+    if (!checkIn || !checkOut) {
+      setError("Please select both check-in and check-out dates");
+      return;
+    }
+
+    // Validate that checkout is after checkin
+    if (new Date(checkIn) >= new Date(checkOut)) {
+      setError("Check-out date must be after check-in date");
+      return;
+    }
+
+    // Navigate to /rooms with query parameters
+    setSearchData({ checkIn, checkOut, guests });
+
+    router.push("/Rooms");
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative lg:bottom-auto">
       <div className="glass border-t border-bone/10 lg:border lg:rounded-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-300 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
             {/* Check In */}
             <div className="flex-1 flex items-center gap-3 p-3 bg-bone/5 rounded-lg">
@@ -499,7 +444,10 @@ const BookingBar = () => {
                 <input
                   type="date"
                   value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
+                  onChange={(e) => {
+                    setCheckIn(e.target.value);
+                    setError("");
+                  }}
                   className="w-full bg-transparent text-bone outline-none mt-1"
                 />
               </div>
@@ -515,7 +463,10 @@ const BookingBar = () => {
                 <input
                   type="date"
                   value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
+                  onChange={(e) => {
+                    setCheckOut(e.target.value);
+                    setError("");
+                  }}
                   className="w-full bg-transparent text-bone outline-none mt-1"
                 />
               </div>
@@ -553,6 +504,7 @@ const BookingBar = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleCheckAvailability}
               className="lg:flex-shrink-0 px-8 py-4 bg-gold text-charcoal font-medium uppercase tracking-wider hover:bg-gold-light transition-colors"
             >
               Check Availability
@@ -565,134 +517,7 @@ const BookingBar = () => {
 };
 
 // Footer Component
-const Footer = () => {
-  return (
-    <footer className="bg-charcoal border-t border-bone/10 pt-20 pb-32 lg:pb-8">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          {/* Brand */}
-          <div className="lg:col-span-1">
-            <h3 className="font-serif text-3xl text-gold mb-4">AURELIA</h3>
-            <p className="text-bone/60 mb-6">
-              A sanctuary of refined elegance where every moment is crafted for
-              extraordinary experiences.
-            </p>
-            <div className="flex gap-4">
-              {[Globe, MessageCircle, Heart].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-10 h-10 rounded-full border border-bone/20 flex items-center justify-center text-bone/60 hover:text-gold hover:border-gold transition-colors"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div>
-          </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-bone font-medium mb-6 uppercase tracking-wider text-sm">
-              Quick Links
-            </h4>
-            <ul className="space-y-3">
-              {[
-                "About Us",
-                "Our Rooms",
-                "Dining",
-                "Spa & Wellness",
-                "Events",
-              ].map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    className="text-bone/60 hover:text-gold transition-colors"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-bone font-medium mb-6 uppercase tracking-wider text-sm">
-              Contact
-            </h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-gold mt-1 flex-shrink-0" />
-                <span className="text-bone/60">
-                  123 Luxury Avenue, Paradise Bay, CA 90210
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone size={18} className="text-gold flex-shrink-0" />
-                <a
-                  href="tel:+1234567890"
-                  className="text-bone/60 hover:text-gold transition-colors"
-                >
-                  +1 (234) 567-890
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={18} className="text-gold flex-shrink-0" />
-                <a
-                  href="mailto:reservations@aurelia.com"
-                  className="text-bone/60 hover:text-gold transition-colors"
-                >
-                  reservations@aurelia.com
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-bone font-medium mb-6 uppercase tracking-wider text-sm">
-              Newsletter
-            </h4>
-            <p className="text-bone/60 mb-4">
-              Subscribe for exclusive offers and updates.
-            </p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="flex-1 bg-bone/5 border border-bone/20 px-4 py-3 text-bone outline-none focus:border-gold transition-colors"
-              />
-              <button className="px-4 py-3 bg-gold text-charcoal hover:bg-gold-light transition-colors">
-                <ArrowRight size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="border-t border-bone/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-bone/40 text-sm">
-            &copy; 2024 Aurelia Grand Hotel. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-sm">
-            <a
-              href="#"
-              className="text-bone/40 hover:text-gold transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-bone/40 hover:text-gold transition-colors"
-            >
-              Terms of Service
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
 
 // Main Page Component
 export default function Home() {
