@@ -3,14 +3,18 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { Room } from '@/app/lib/roomsData';
+
+import BookingForm from "./BookingForm";
 
 interface QuickViewDrawerProps {
-  room: Room | null;
+  room: any | null;
   onClose: () => void;
 }
 
-export default function QuickViewDrawer({ room, onClose }: QuickViewDrawerProps) {
+export default function QuickViewDrawer({
+  room,
+  onClose,
+}: QuickViewDrawerProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!room) return null;
@@ -20,7 +24,9 @@ export default function QuickViewDrawer({ room, onClose }: QuickViewDrawerProps)
   };
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + room.gallery.length) % room.gallery.length);
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + room.gallery.length) % room.gallery.length,
+    );
   };
 
   return (
@@ -38,10 +44,10 @@ export default function QuickViewDrawer({ room, onClose }: QuickViewDrawerProps)
 
           {/* Drawer */}
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed right-0 top-0 h-full w-full md:w-96 bg-white z-50 overflow-y-auto shadow-2xl"
           >
             {/* Close Button */}
@@ -99,46 +105,62 @@ export default function QuickViewDrawer({ room, onClose }: QuickViewDrawerProps)
               {/* Price Tag */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-serif text-gray-900">{room.name}</h2>
+                  <h2 className="text-2xl font-serif text-gray-900">
+                    {room.name}
+                  </h2>
                   <p className="text-sm text-gray-600 mt-1">{room.category}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-purple-600">${room.price}</p>
+                  <p className="text-lg font-bold text-purple-600">
+                    ${room.price}
+                  </p>
                   <p className="text-xs text-gray-600">per night</p>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-gray-700 text-sm leading-relaxed">{room.description}</p>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {room.description}
+              </p>
 
               {/* Room Details */}
               <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Size</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">{room.sqft} sqft</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Size
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {room.sqft} sqft
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Bed</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">{room.bedType}</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Bed
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {room.bedType}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">View</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">{room.viewType}</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    View
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {room.viewType}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Guests</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">Up to {room.maxGuests}</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Guests
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    Up to {room.maxGuests}
+                  </p>
                 </div>
               </div>
 
-              {/* CTA Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-xl transition"
-              >
-                Book Now
-              </motion.button>
+              {/* Booking Form */}
+              <BookingForm room={room} onSuccess={onClose} onClose={onClose} />
             </div>
           </motion.div>
         </>
