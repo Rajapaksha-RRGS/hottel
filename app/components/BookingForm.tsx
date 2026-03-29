@@ -153,17 +153,17 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setLoading(true);
 
     try {
-      const response = await fetch('/api/booking', {
-        method: 'POST',
+      const response = await fetch("/api/booking", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           roomId: room.roomNumber,
           roomName: room.roomNumber,
           roomPrice: room.pricePerNight,
-          userId: session?.user?.id || 'temp-' + Date.now(),
-          userName: session?.user?.name || 'Guest User',
+          userId: session?.user?.id || "temp-" + Date.now(),
+          userName: session?.user?.name || "Guest User",
           checkInDate: new Date(checkInDate).toISOString(),
           checkOutDate: new Date(checkOutDate).toISOString(),
         }),
