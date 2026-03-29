@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from "next/font/google";
 import { Providers } from "./providers";
+import { SearchProvider } from "@/context/SearchContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,7 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} font-sans`}>
-        <Providers>{children}</Providers>
+        <SearchProvider>
+          <Providers>{children}</Providers>
+        </SearchProvider>
       </body>
     </html>
   );
