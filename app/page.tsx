@@ -16,7 +16,22 @@ import {
   MessageCircle,
   AlertTriangle,
   Search,
+  TrendingUp,
 } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 // ─── Colour tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -951,6 +966,328 @@ const SiteFooter = () => (
   </footer>
 );
 
+// ─── Order History & Sales Chart Section ────────────────────────────────────
+const monthlyOrderData = [
+  { month: "Jan", orders: 820, revenue: 184000, kg: 2460 },
+  { month: "Feb", orders: 940, revenue: 211500, kg: 2820 },
+  { month: "Mar", orders: 1120, revenue: 252000, kg: 3360 },
+  { month: "Apr", orders: 1050, revenue: 236250, kg: 3150 },
+  { month: "May", orders: 1380, revenue: 310500, kg: 4140 },
+  { month: "Jun", orders: 1560, revenue: 351000, kg: 4680 },
+  { month: "Jul", orders: 1720, revenue: 387000, kg: 5160 },
+  { month: "Aug", orders: 1640, revenue: 369000, kg: 4920 },
+  { month: "Sep", orders: 1890, revenue: 425250, kg: 5670 },
+  { month: "Oct", orders: 2050, revenue: 461250, kg: 6150 },
+  { month: "Nov", orders: 2310, revenue: 519750, kg: 6930 },
+  { month: "Dec", orders: 2680, revenue: 603000, kg: 8040 },
+];
+
+const produceShareData = [
+  { name: "Vegetables", value: 48, color: C.green },
+  { name: "Leafy Greens", value: 22, color: C.greenLight },
+  { name: "Fruits", value: 20, color: C.yellow },
+  { name: "Herbs", value: 10, color: C.mintDark },
+];
+
+const ChartTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number }>; label?: string }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        className="rounded-2xl px-4 py-3 shadow-xl text-sm"
+        style={{
+          backgroundColor: C.textDark,
+          border: `1px solid ${C.greenLight}`,
+          color: "#fff",
+        }}
+      >
+        <p className="font-semibold mb-1" style={{ color: C.mint }}>{label}</p>
+        {payload.map((entry, i) => (
+          <p key={i} style={{ color: C.yellow }}>
+            {entry.name === "revenue"
+              ? `Revenue: Rs ${entry.value.toLocaleString()}`
+              : entry.name === "orders"
+              ? `Orders: ${entry.value}`
+              : `Kg Delivered: ${entry.value.toLocaleString()}`}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const OrderHistorySection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  const kpis = [
+    { label: "Total Orders (2024)", value: "19,160", change: "+34%", up: true },
+    { label: "Revenue (LKR)", value: "4.3M+", change: "+41%", up: true },
+    { label: "Kg Delivered", value: "57,480", change: "+38%", up: true },
+    { label: "Avg. Order Value", value: "Rs 224", change: "+5%", up: true },
+  ];
+
+  return (
+    <section
+      ref={ref}
+      id="order-history"
+      className="py-20 px-6"
+      style={{ backgroundColor: C.textDark }}
+    >
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-3"
+            style={{ color: C.greenLight }}
+          >
+            Marketplace Performance
+          </p>
+          <h2
+            className="font-serif text-4xl md:text-5xl font-bold"
+            style={{ color: "#fff" }}
+          >
+            Order History &amp;{" "}
+            <span style={{ color: C.yellow }}>Growth Charts</span>
+          </h2>
+          <p className="mt-4 max-w-xl mx-auto text-sm" style={{ color: C.mintDark }}>
+            Our platform has grown month-on-month since launch. Every order directly supports a local Sri Lankan farmer.
+          </p>
+        </motion.div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {kpis.map(({ label, value, change, up }, i) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="rounded-2xl p-5"
+              style={{
+                backgroundColor: "rgba(45,106,79,0.18)",
+                border: `1px solid ${C.green}`,
+              }}
+            >
+              <p
+                className="font-serif text-3xl font-bold mb-1"
+                style={{ color: C.yellow }}
+              >
+                {value}
+              </p>
+              <p className="text-xs mb-2" style={{ color: C.mint }}>{label}</p>
+              <div className="flex items-center gap-1">
+                <TrendingUp size={12} style={{ color: up ? "#4ADE80" : "#F87171" }} />
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: up ? "#4ADE80" : "#F87171" }}
+                >
+                  {change} YoY
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          {/* Area chart — Orders per month */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-2 rounded-3xl p-6"
+            style={{
+              backgroundColor: "rgba(45,106,79,0.12)",
+              border: `1px solid ${C.green}`,
+            }}
+          >
+            <h3
+              className="font-serif text-lg font-semibold mb-1"
+              style={{ color: "#fff" }}
+            >
+              Monthly Order Volume
+            </h3>
+            <p className="text-xs mb-6" style={{ color: C.greenLight }}>
+              Number of orders placed per month in 2024
+            </p>
+            <div className="h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={monthlyOrderData}
+                  margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
+                      <stop offset="95%" stopColor={C.green} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(216,243,220,0.08)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: C.greenLight, fontSize: 11 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: C.greenLight, fontSize: 11 }}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="orders"
+                    stroke={C.yellow}
+                    strokeWidth={2.5}
+                    fill="url(#greenGrad)"
+                    dot={false}
+                    activeDot={{
+                      r: 5,
+                      fill: C.yellow,
+                      stroke: C.textDark,
+                      strokeWidth: 2,
+                    }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Pie chart — Produce share */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="rounded-3xl p-6"
+            style={{
+              backgroundColor: "rgba(45,106,79,0.12)",
+              border: `1px solid ${C.green}`,
+            }}
+          >
+            <h3
+              className="font-serif text-lg font-semibold mb-1"
+              style={{ color: "#fff" }}
+            >
+              Produce Category Mix
+            </h3>
+            <p className="text-xs mb-4" style={{ color: C.greenLight }}>
+              Share of orders by category
+            </p>
+            <div className="flex justify-center">
+              <div className="h-[180px] w-[180px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={produceShareData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {produceShareData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              {produceShareData.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span style={{ color: C.mint }}>{item.name}</span>
+                  </div>
+                  <span className="font-semibold" style={{ color: "#fff" }}>
+                    {item.value}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Bar chart — Monthly Revenue */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.45 }}
+          className="rounded-3xl p-6"
+          style={{
+            backgroundColor: "rgba(45,106,79,0.12)",
+            border: `1px solid ${C.green}`,
+          }}
+        >
+          <h3
+            className="font-serif text-lg font-semibold mb-1"
+            style={{ color: "#fff" }}
+          >
+            Monthly Revenue (LKR)
+          </h3>
+          <p className="text-xs mb-6" style={{ color: C.greenLight }}>
+            Total revenue paid directly to farmers each month
+          </p>
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={monthlyOrderData}
+                margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(216,243,220,0.08)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: C.greenLight, fontSize: 11 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: C.greenLight, fontSize: 11 }}
+                  tickFormatter={(v) => `${v / 1000}k`}
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar
+                  dataKey="revenue"
+                  fill={C.yellow}
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={48}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   return (
@@ -961,6 +1298,7 @@ export default function Home() {
       <TrustBar />
       <HowItWorksSection />
       <MarketplaceSection />
+      <OrderHistorySection />
       <SuccessVisionSection />
       <SiteFooter />
       <WhatsAppButton />
