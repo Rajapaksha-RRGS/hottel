@@ -14,6 +14,15 @@ const config: Config = {
         gold: "#C5A059",
         "gold-light": "#D4B76A",
         "gold-dark": "#A68A45",
+        // Agri-Commerce palette
+        forest: "#2D6A4F",
+        "forest-dark": "#1B4332",
+        "forest-light": "#40916C",
+        mint: "#D8F3DC",
+        "mint-dark": "#B7E4C7",
+        harvest: "#FFB703",
+        "harvest-dark": "#E5A500",
+        ivory: "#F8F9FA",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
