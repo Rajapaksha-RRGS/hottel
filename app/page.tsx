@@ -1,389 +1,290 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Herder";
-import Link from "next/link";
-import { useSearch } from "@/context/SearchContext";
-import Footer from "./components/Footer";
-
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
-  Menu,
-  X,
-  Calendar,
-  Users,
-  ChevronDown,
-  Star,
-  MapPin,
-  Phone,
-  Mail,
   ArrowRight,
-  Wifi,
-  Car,
-  UtensilsCrossed,
-  Dumbbell,
-  Waves,
-  Sparkles,
-  Globe,
-  MessageCircle,
+  Leaf,
+  Truck,
+  ShieldCheck,
+  CheckCircle,
+  XCircle,
+  Users,
+  Sprout,
+  ShoppingBasket,
   Heart,
+  MessageCircle,
 } from "lucide-react";
 
-import UserProfile from "./components/UseProfile";
-
-// Navigation Component
-
-
-// Hero Section Component
+// ─── Hero Section ─────────────────────────────────────────────────────────────
 const HeroSection = () => {
   const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, 150]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const y = useTransform(scrollY, [0, 600], [0, 180]);
+  const opacity = useTransform(scrollY, [0, 350], [1, 0]);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
-      {/* Video Background Placeholder */}
+    <section className="relative min-h-screen w-full overflow-hidden flex items-center">
+      {/* Background with parallax */}
       <motion.div style={{ y }} className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center" />
-        <div className="hero-overlay absolute inset-0" />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2074&q=80')",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-forest/80 via-forest/60 to-forest-dark/70" />
       </motion.div>
 
       {/* Hero Content */}
       <motion.div
         style={{ opacity }}
-        className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6"
+        className="relative z-10 w-full max-w-7xl mx-auto px-6 py-24 md:py-32"
       >
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-gold tracking-[0.4em] uppercase text-sm md:text-base mb-6"
-        >
-          Welcome to Luxury
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="font-serif text-5xl md:text-7xl lg:text-8xl text-bone mb-6 leading-tight"
-        >
-          Where Elegance
-          <br />
-          <span className="text-gold-gradient">Meets Serenity</span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="text-bone/70 text-lg md:text-xl max-w-2xl mb-10"
-        >
-          Discover an unparalleled experience of refined comfort and timeless
-          sophistication
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.9 }}
-          className="flex flex-col sm:flex-row gap-4"
-        >
-          <a
-            href="#rooms"
-            className="px-8 py-4 bg-gold text-charcoal font-medium tracking-wide uppercase hover:bg-gold-light transition-all duration-300 flex items-center gap-2 group"
+        <div className="max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="inline-flex items-center gap-2 bg-mint/20 border border-mint/40 text-mint px-4 py-2 rounded-full text-sm font-medium mb-6"
           >
-            Explore Rooms
-            <ArrowRight
-              size={18}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </a>
-          <a
-            href="#experiences"
-            className="px-8 py-4 border border-bone/30 text-bone font-medium tracking-wide uppercase hover:border-gold hover:text-gold transition-all duration-300"
+            <Leaf size={14} />
+            <span>Farm-to-Table · Sri Lanka</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
           >
-            Our Story
-          </a>
-        </motion.div>
+            Fresh Vegetables &amp; Fruits{" "}
+            <span className="text-harvest">Direct from Farmers</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+            className="text-white/80 text-lg md:text-xl max-w-2xl mb-4"
+          >
+            Harvested today. At your door within 24 hours. No middlemen, no
+            chemicals — just pure goodness straight from the soil.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.8 }}
+            className="flex flex-wrap gap-4 items-center mb-10"
+          >
+            {["✓ Harvested Today", "✓ 24-Hour Delivery", "✓ Zero Chemicals"].map(
+              (tag) => (
+                <span key={tag} className="text-mint text-sm font-medium">
+                  {tag}
+                </span>
+              )
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1 }}
+            className="flex flex-col sm:flex-row gap-4"
+          >
+            <a
+              href="#marketplace"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-harvest text-forest-dark font-semibold text-base rounded-xl hover:bg-harvest-dark transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              Order Now
+              <ArrowRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </a>
+            <a
+              href="#how-it-works"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 border border-white/30 text-white font-medium text-base rounded-xl hover:bg-white/20 transition-all duration-300"
+            >
+              How It Works
+            </a>
+          </motion.div>
+        </div>
       </motion.div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll hint */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
+        transition={{ delay: 1.4 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <span className="text-bone/50 text-xs tracking-widest uppercase">
-          Scroll
-        </span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          className="w-6 h-10 border border-bone/30 rounded-full flex items-start justify-center p-2"
+          className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2"
         >
-          <motion.div className="w-1 h-2 bg-gold rounded-full" />
+          <div className="w-1.5 h-2.5 bg-white/60 rounded-full" />
         </motion.div>
       </motion.div>
     </section>
   );
 };
 
-// Room Card Component
-interface RoomCardProps {
-  title: string;
-  price: string;
-  image: string;
-  size: string;
-  available: boolean;
-  featured?: boolean;
-  className?: string;
-}
-
-const RoomCard = ({
-  title,
-  price,
-  image,
-  size,
-  available,
-  featured,
-  className,
-}: RoomCardProps) => {
+// ─── Villain Section ───────────────────────────────────────────────────────────
+const VillainSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      whileHover={{ scale: 1.02 }}
-      className={`relative group overflow-hidden glass-light rounded-lg ${className}`}
-    >
-      {/* Image */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-          style={{ backgroundImage: `url(${image})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/50 to-transparent" />
-      </div>
-
-      {/* Availability Indicator */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 glass px-3 py-1.5 rounded-full">
-        <span
-          className={`w-2 h-2 rounded-full ${
-            available ? "bg-green-500 availability-dot" : "bg-red-500"
-          }`}
-        />
-        <span className="text-xs text-bone/80">
-          {available ? "Available" : "Booked"}
-        </span>
-      </div>
-
-      {/* Featured Badge */}
-      {featured && (
-        <div className="absolute top-4 left-4 bg-gold text-charcoal px-3 py-1 text-xs font-medium uppercase tracking-wider">
-          Featured
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end p-6">
-        <div className="mb-2 flex items-center gap-1 text-gold">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} size={12} fill="currentColor" />
-          ))}
-        </div>
-        <h3 className="font-serif text-2xl md:text-3xl text-bone mb-2">
-          {title}
-        </h3>
-        <p className="text-bone/60 text-sm mb-4">{size}</p>
-        <div className="flex items-end justify-between">
-          <div>
-            <span className="text-gold text-2xl font-serif">${price}</span>
-            <span className="text-bone/50 text-sm"> / night</span>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 bg-gold/20 border border-gold/50 text-gold text-sm uppercase tracking-wide hover:bg-gold hover:text-charcoal transition-all duration-300"
-          >
-            View Details
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// Rooms Section with Bento Grid
-const RoomsSection = () => {
-  const rooms = [
-    {
-      title: "Presidential Suite",
-      price: "1,299",
-      image:
-        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-      size: "250 m² • King Bed • Ocean View",
-      available: true,
-      featured: true,
-    },
-    {
-      title: "Grand Deluxe",
-      price: "599",
-      image:
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80",
-      size: "120 m² • Queen Bed • City View",
-      available: true,
-      featured: false,
-    },
-    {
-      title: "Ocean Villa",
-      price: "899",
-      image:
-        "https://images.unsplash.com/photo-1602002418082-a4443e081dd1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80",
-      size: "180 m² • King Bed • Private Pool",
-      available: false,
-      featured: false,
-    },
-    {
-      title: "Garden Suite",
-      price: "449",
-      image:
-        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-      size: "95 m² • Twin Beds • Garden View",
-      available: true,
-      featured: false,
-    },
-    {
-      title: "Royal Penthouse",
-      price: "2,499",
-      image:
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-      size: "400 m² • Master Suite • 360° View",
-      available: true,
-      featured: true,
-    },
+  const supermarketProblems = [
+    "Pesticide-laden produce",
+    "Picked days (even weeks) ago",
+    "Stored in cold rooms for months",
+    "Multiple middlemen inflate prices",
+    "Unknown source & farming practices",
   ];
 
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const ourBenefits = [
+    "Zero synthetic chemicals, ever",
+    "Harvested the very same morning",
+    "Direct from the farmer to you",
+    "Fair prices for farmers & buyers",
+    "Know exactly which farm it came from",
+  ];
 
   return (
-    <section id="rooms" className="py-24 px-6 bg-charcoal">
-      <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
+    <section className="py-20 md:py-28 bg-ivory px-6">
+      <div className="max-w-6xl mx-auto" ref={ref}>
         <motion.div
-          ref={ref}
           initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
-          <p className="text-gold tracking-[0.3em] uppercase text-sm mb-4">
-            Accommodations
+          <p className="text-forest font-medium tracking-widest uppercase text-sm mb-3">
+            The Problem With Supermarkets
           </p>
-          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-bone mb-6">
-            Our Rooms & Suites
+          <h2 className="font-serif text-4xl md:text-5xl text-forest-dark leading-tight">
+            Your Family Deserves Better Than
+            <br className="hidden md:block" /> Stale &amp; Sprayed Produce
           </h2>
-          <p className="text-bone/60 max-w-2xl mx-auto">
-            Each room is a sanctuary of comfort, designed with meticulous
-            attention to detail and an unwavering commitment to luxury.
-          </p>
         </motion.div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[300px]">
-          <RoomCard
-            {...rooms[0]}
-            className="md:col-span-2 md:row-span-2 min-h-[400px] lg:min-h-[620px]"
-          />
-          <RoomCard {...rooms[1]} className="min-h-[300px]" />
-          <RoomCard {...rooms[2]} className="min-h-[300px]" />
-          <RoomCard {...rooms[3]} className="min-h-[300px]" />
-          <RoomCard
-            {...rooms[4]}
-            className="md:col-span-2 min-h-[300px] lg:min-h-[400px]"
-          />
-        </div>
-
-        {/* View All Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-center mt-12"
-        >
-          <a
-            href="/rooms"
-            className="inline-flex items-center gap-2 text-gold border-b border-gold/50 pb-1 hover:border-gold transition-colors group"
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Supermarket column */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-2xl p-8 shadow-sm border border-red-100"
           >
-            View All Accommodations
-            <ArrowRight
-              size={16}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </a>
-        </motion.div>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl">🏪</span>
+              <h3 className="font-serif text-xl text-gray-800 font-semibold">
+                Typical Supermarket
+              </h3>
+            </div>
+            <ul className="space-y-3">
+              {supermarketProblems.map((p) => (
+                <li key={p} className="flex items-start gap-3 text-gray-600">
+                  <XCircle
+                    size={18}
+                    className="text-red-400 mt-0.5 flex-shrink-0"
+                  />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Our solution column */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="bg-mint rounded-2xl p-8 shadow-sm border border-forest/10"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl">🌿</span>
+              <h3 className="font-serif text-xl text-forest-dark font-semibold">
+                Fresh from Farmers
+              </h3>
+            </div>
+            <ul className="space-y-3">
+              {ourBenefits.map((b) => (
+                <li
+                  key={b}
+                  className="flex items-start gap-3 text-forest-dark"
+                >
+                  <CheckCircle
+                    size={18}
+                    className="text-forest mt-0.5 flex-shrink-0"
+                  />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
 };
 
-// Amenities Section
-const AmenitiesSection = () => {
-  const amenities = [
-    { icon: Wifi, name: "High-Speed WiFi", desc: "Complimentary throughout" },
-    { icon: Car, name: "Valet Parking", desc: "24/7 service available" },
+// ─── Trust Bar ─────────────────────────────────────────────────────────────────
+const TrustBar = () => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const stats = [
     {
-      icon: UtensilsCrossed,
-      name: "Fine Dining",
-      desc: "Michelin-starred restaurant",
+      icon: Sprout,
+      value: "500+",
+      label: "Partner Farmers",
+      color: "text-harvest",
     },
     {
-      icon: Dumbbell,
-      name: "Fitness Center",
-      desc: "State-of-the-art equipment",
+      icon: Users,
+      value: "10,000+",
+      label: "Happy Families",
+      color: "text-harvest",
     },
-    { icon: Waves, name: "Infinity Pool", desc: "Rooftop ocean views" },
-    { icon: Sparkles, name: "Spa & Wellness", desc: "Rejuvenating treatments" },
+    {
+      icon: Truck,
+      value: "24 hrs",
+      label: "Delivery Guarantee",
+      color: "text-harvest",
+    },
+    {
+      icon: ShieldCheck,
+      value: "100%",
+      label: "Chemical-Free",
+      color: "text-harvest",
+    },
   ];
 
   return (
-    <section className="py-24 px-6 bg-gradient-to-b from-charcoal to-charcoal/95">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <p className="text-gold tracking-[0.3em] uppercase text-sm mb-4">
-            World-Class
-          </p>
-          <h2 className="font-serif text-4xl md:text-5xl text-bone">
-            Amenities & Services
-          </h2>
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {amenities.map((item, index) => (
+    <section className="py-16 bg-forest px-6" ref={ref}>
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
+          {stats.map((stat, i) => (
             <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className="glass-light p-6 rounded-lg text-center group cursor-pointer"
+              key={stat.label}
+              initial={{ opacity: 0, y: 24 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="flex flex-col items-center text-center gap-3"
             >
-              <item.icon
-                size={32}
-                className="mx-auto mb-4 text-gold group-hover:scale-110 transition-transform"
-              />
-              <h3 className="text-bone font-medium mb-1">{item.name}</h3>
-              <p className="text-bone/50 text-sm">{item.desc}</p>
+              <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+                <stat.icon size={26} className={stat.color} />
+              </div>
+              <span className="font-serif text-4xl md:text-5xl text-white font-bold">
+                {stat.value}
+              </span>
+              <span className="text-mint/80 text-sm font-medium uppercase tracking-wide">
+                {stat.label}
+              </span>
             </motion.div>
           ))}
         </div>
@@ -392,158 +293,433 @@ const AmenitiesSection = () => {
   );
 };
 
-// Booking Bar Component
-const BookingBar = () => {
-  const router = useRouter();
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("2 Adults");
-  const [error, setError] = useState("");
-  const { setSearchData } = useSearch();
+// ─── How It Works (3-Step Plan) ────────────────────────────────────────────────
+const HowItWorksSection = () => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
-  const handleCheckAvailability = () => {
-    setError("");
-
-    // Validate dates
-    if (!checkIn || !checkOut) {
-      setError("Please select both check-in and check-out dates");
-      return;
-    }
-
-    // Validate that checkout is after checkin
-    if (new Date(checkIn) >= new Date(checkOut)) {
-      setError("Check-out date must be after check-in date");
-      return;
-    }
-
-    // Navigate to /rooms with query parameters
-    setSearchData({ checkIn, checkOut, guests });
-
-    router.push("/Rooms");
-  };
+  const steps = [
+    {
+      step: "01",
+      icon: ShoppingBasket,
+      title: "Browse & Pick",
+      desc: "Explore our seasonal marketplace. Choose fresh produce harvested by name-known farmers in Sri Lanka.",
+    },
+    {
+      step: "02",
+      icon: Sprout,
+      title: "We Harvest",
+      desc: "Your order triggers a harvest. Farmers pick only what you need — no waste, no pre-storage.",
+    },
+    {
+      step: "03",
+      icon: Truck,
+      title: "Delivered Fresh",
+      desc: "Packed with care and delivered to your door within 24 hours of harvest — still crisp, still alive.",
+    },
+  ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative lg:bottom-auto">
-      <div className="glass border-t border-bone/10 lg:border lg:rounded-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-300 text-sm rounded-lg">
-              {error}
-            </div>
-          )}
+    <section id="how-it-works" className="py-20 md:py-28 bg-white px-6">
+      <div className="max-w-6xl mx-auto" ref={ref}>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-forest font-medium tracking-widest uppercase text-sm mb-3">
+            Simple As 1-2-3
+          </p>
+          <h2 className="font-serif text-4xl md:text-5xl text-forest-dark">
+            From Farm to Your Table
+          </h2>
+        </motion.div>
 
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-            {/* Check In */}
-            <div className="flex-1 flex items-center gap-3 p-3 bg-bone/5 rounded-lg">
-              <Calendar size={20} className="text-gold" />
-              <div className="flex-1">
-                <label className="text-bone/50 text-xs uppercase tracking-wider">
-                  Check In
-                </label>
-                <input
-                  type="date"
-                  value={checkIn}
-                  onChange={(e) => {
-                    setCheckIn(e.target.value);
-                    setError("");
-                  }}
-                  className="w-full bg-transparent text-bone outline-none mt-1"
-                />
-              </div>
-            </div>
+        <div className="relative grid md:grid-cols-3 gap-10 md:gap-8">
+          {/* Connector line (desktop only) */}
+          <div className="hidden md:block absolute top-14 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-0.5 bg-mint-dark" />
 
-            {/* Check Out */}
-            <div className="flex-1 flex items-center gap-3 p-3 bg-bone/5 rounded-lg">
-              <Calendar size={20} className="text-gold" />
-              <div className="flex-1">
-                <label className="text-bone/50 text-xs uppercase tracking-wider">
-                  Check Out
-                </label>
-                <input
-                  type="date"
-                  value={checkOut}
-                  onChange={(e) => {
-                    setCheckOut(e.target.value);
-                    setError("");
-                  }}
-                  className="w-full bg-transparent text-bone outline-none mt-1"
-                />
-              </div>
-            </div>
-
-            {/* Guests */}
-            <div className="flex-1 flex items-center gap-3 p-3 bg-bone/5 rounded-lg">
-              <Users size={20} className="text-gold" />
-              <div className="flex-1">
-                <label className="text-bone/50 text-xs uppercase tracking-wider">
-                  Guests
-                </label>
-                <div className="relative">
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    className="w-full bg-transparent text-bone outline-none mt-1 appearance-none cursor-pointer"
-                  >
-                    <option value="1 Adult">1 Adult</option>
-                    <option value="2 Adults">2 Adults</option>
-                    <option value="2 Adults, 1 Child">2 Adults, 1 Child</option>
-                    <option value="2 Adults, 2 Children">
-                      2 Adults, 2 Children
-                    </option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-bone/50 pointer-events-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Book Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCheckAvailability}
-              className="lg:flex-shrink-0 px-8 py-4 bg-gold text-charcoal font-medium uppercase tracking-wider hover:bg-gold-light transition-colors"
+          {steps.map((s, i) => (
+            <motion.div
+              key={s.step}
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: i * 0.15 }}
+              className="relative flex flex-col items-center text-center"
             >
-              Check Availability
-            </motion.button>
-          </div>
+              <div className="relative z-10 w-28 h-28 rounded-full bg-mint flex flex-col items-center justify-center mb-6 shadow-md">
+                <span className="text-forest text-xs font-bold tracking-widest uppercase mb-1">
+                  Step {s.step}
+                </span>
+                <s.icon size={30} className="text-forest" />
+              </div>
+              <h3 className="font-serif text-xl text-forest-dark font-semibold mb-3">
+                {s.title}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                {s.desc}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
-// Footer Component
+// ─── Produce Card ──────────────────────────────────────────────────────────────
+interface ProduceCardProps {
+  name: string;
+  farmer: string;
+  location: string;
+  price: string;
+  unit: string;
+  emoji: string;
+  tag: string;
+}
 
+const ProduceCard = ({
+  name,
+  farmer,
+  location,
+  price,
+  unit,
+  emoji,
+  tag,
+}: ProduceCardProps) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
 
-// Main Page Component
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5 }}
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100 transition-shadow duration-300"
+    >
+      {/* Produce visual */}
+      <div className="bg-mint/40 h-40 flex items-center justify-center relative">
+        <span className="text-7xl select-none">{emoji}</span>
+        <span className="absolute top-3 right-3 bg-harvest text-forest-dark text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+          {tag}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div className="p-5">
+        <h3 className="font-serif text-lg text-forest-dark font-semibold mb-1">
+          {name}
+        </h3>
+        <div className="flex items-center gap-1 text-xs text-gray-400 mb-3">
+          <Leaf size={11} className="text-forest" />
+          <span>
+            {farmer} · {location}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-forest font-bold text-lg">
+            Rs.{price}
+            <span className="text-gray-400 font-normal text-sm"> / {unit}</span>
+          </span>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-4 py-2 bg-harvest text-forest-dark text-sm font-semibold rounded-xl hover:bg-harvest-dark transition-colors duration-200"
+          >
+            Add to Cart
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── Featured Marketplace ──────────────────────────────────────────────────────
+const MarketplaceSection = () => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const produce: ProduceCardProps[] = [
+    {
+      name: "Organic Tomatoes",
+      farmer: "Kumara Perera",
+      location: "Nuwara Eliya",
+      price: "180",
+      unit: "500g",
+      emoji: "🍅",
+      tag: "Seasonal",
+    },
+    {
+      name: "Baby Spinach",
+      farmer: "Niluka Silva",
+      location: "Badulla",
+      price: "90",
+      unit: "250g",
+      emoji: "🥬",
+      tag: "Popular",
+    },
+    {
+      name: "Sweet Carrots",
+      farmer: "Arjuna Bandara",
+      location: "Kandy",
+      price: "120",
+      unit: "1 kg",
+      emoji: "🥕",
+      tag: "Fresh",
+    },
+    {
+      name: "Dragon Fruit",
+      farmer: "Suneetha Jayawardena",
+      location: "Kurunegala",
+      price: "350",
+      unit: "piece",
+      emoji: "🐉",
+      tag: "Exotic",
+    },
+    {
+      name: "Mango (Karthakolomban)",
+      farmer: "Priya Fernando",
+      location: "Jaffna",
+      price: "240",
+      unit: "kg",
+      emoji: "🥭",
+      tag: "Seasonal",
+    },
+    {
+      name: "Green Beans",
+      farmer: "Saman Dissanayake",
+      location: "Matale",
+      price: "100",
+      unit: "500g",
+      emoji: "🫘",
+      tag: "Popular",
+    },
+  ];
+
+  return (
+    <section id="marketplace" className="py-20 md:py-28 bg-ivory px-6">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <p className="text-forest font-medium tracking-widest uppercase text-sm mb-3">
+            Today&apos;s Harvest
+          </p>
+          <h2 className="font-serif text-4xl md:text-5xl text-forest-dark mb-4">
+            Seasonal Produce Marketplace
+          </h2>
+          <p className="text-gray-500 max-w-xl mx-auto">
+            Every product is tied to a real farmer. Tap a card to learn their
+            story and see how your food is grown.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {produce.map((item) => (
+            <ProduceCard key={item.name} {...item} />
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-12"
+        >
+          <a
+            href="#"
+            className="inline-flex items-center gap-2 px-8 py-4 border-2 border-forest text-forest font-semibold rounded-xl hover:bg-forest hover:text-white transition-all duration-300 group"
+          >
+            View Full Marketplace
+            <ArrowRight
+              size={18}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// ─── Success Vision Section ────────────────────────────────────────────────────
+const SuccessVisionSection = () => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <section className="py-20 md:py-28 bg-white px-6 overflow-hidden">
+      <div className="max-w-6xl mx-auto" ref={ref}>
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Image */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7 }}
+            className="relative"
+          >
+            <div
+              className="h-80 md:h-[480px] rounded-3xl bg-cover bg-center shadow-xl"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1543353071-873f17a7a088?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')",
+              }}
+            />
+            {/* Floating badge */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -bottom-6 -right-6 bg-forest text-white rounded-2xl px-6 py-4 shadow-lg"
+            >
+              <div className="flex items-center gap-2">
+                <Heart size={18} className="text-harvest" />
+                <span className="font-semibold text-sm">Healthier Families</span>
+              </div>
+              <p className="text-mint/80 text-xs mt-1">
+                Sri Lanka&apos;s #1 Farm-to-Table
+              </p>
+            </motion.div>
+          </motion.div>
+
+          {/* Text */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.15 }}
+          >
+            <p className="text-forest font-medium tracking-widest uppercase text-sm mb-4">
+              Imagine This
+            </p>
+            <h2 className="font-serif text-4xl md:text-5xl text-forest-dark leading-tight mb-6">
+              A Table Full of Real,{" "}
+              <span className="text-forest">Nourishing Food</span>
+            </h2>
+            <p className="text-gray-500 text-lg leading-relaxed mb-6">
+              Picture your family gathering around a meal where every ingredient
+              was growing in the earth just hours ago. Bright colours, real
+              flavours, and the peace of mind that no harmful chemicals touched
+              what your children eat.
+            </p>
+            <p className="text-gray-500 leading-relaxed mb-8">
+              That&apos;s not a dream — that&apos;s what thousands of Sri Lankan
+              families experience every week with Fresh from Farmers. Your Amma
+              will taste the difference from the very first bite.
+            </p>
+            <a
+              href="#marketplace"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-harvest text-forest-dark font-semibold rounded-xl hover:bg-harvest-dark transition-all duration-300 shadow-md hover:shadow-lg group"
+            >
+              Start Your Fresh Journey
+              <ArrowRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </a>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ─── Footer ────────────────────────────────────────────────────────────────────
+const AgriFooter = () => (
+  <footer className="bg-forest-dark text-white/80 py-12 px-6">
+    <div className="max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-10 mb-10">
+        {/* Brand */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Leaf size={22} className="text-harvest" />
+            <span className="font-serif text-lg text-white font-semibold">
+              Fresh from Farmers
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-white/60">
+            Connecting Sri Lankan farmers directly with health-conscious
+            families. Harvested today, delivered tomorrow.
+          </p>
+        </div>
+
+        {/* Links */}
+        <div>
+          <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+          <ul className="space-y-2 text-sm">
+            {[
+              "Marketplace",
+              "How It Works",
+              "Our Farmers",
+              "About Us",
+              "Contact",
+            ].map((l) => (
+              <li key={l}>
+                <a
+                  href="#"
+                  className="hover:text-harvest transition-colors duration-200"
+                >
+                  {l}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Contact */}
+        <div>
+          <h4 className="text-white font-semibold mb-4">Contact Us</h4>
+          <ul className="space-y-2 text-sm">
+            <li>📞 +94 77 123 4567</li>
+            <li>✉️ hello@freshfromfarmers.lk</li>
+            <li>📍 Colombo, Sri Lanka</li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-white/10 pt-6 text-center text-xs text-white/40">
+        © {new Date().getFullYear()} Fresh from Farmers · Sri Lanka. All rights
+        reserved.
+      </div>
+    </div>
+  </footer>
+);
+
+// ─── WhatsApp Floating Button ──────────────────────────────────────────────────
+const WhatsAppButton = () => (
+  <motion.a
+    href="https://wa.me/94771234567?text=Hi%2C%20I%27d%20like%20to%20order%20fresh%20produce!"
+    target="_blank"
+    rel="noopener noreferrer"
+    initial={{ scale: 0, opacity: 0 }}
+    animate={{ scale: 1, opacity: 1 }}
+    transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.95 }}
+    className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl"
+    aria-label="Chat on WhatsApp"
+  >
+    <MessageCircle size={28} className="text-white" fill="white" />
+  </motion.a>
+);
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   return (
-    <main className="relative">
-      <Navigation />
+    <main className="relative bg-white">
       <HeroSection />
-
-      {/* Booking Bar - Desktop Position */}
-      <section
-        id="booking"
-        className="hidden lg:block -mt-12 relative z-20 px-6"
-      >
-        <div className="max-w-5xl mx-auto">
-          <BookingBar />
-        </div>
-      </section>
-
-      <RoomsSection />
-      <AmenitiesSection />
-      <Footer />
-
-      {/* Mobile Booking Bar */}
-      <div className="lg:hidden">
-        <BookingBar />
-      </div>
+      <VillainSection />
+      <TrustBar />
+      <HowItWorksSection />
+      <MarketplaceSection />
+      <SuccessVisionSection />
+      <AgriFooter />
+      <WhatsAppButton />
     </main>
   );
 }

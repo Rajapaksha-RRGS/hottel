@@ -7,6 +7,16 @@
   --color-gold-light: #D4B76A;
   --color-gold-dark: #A68A45;
 
+  /* Agri-Commerce palette */
+  --color-forest: #2D6A4F;
+  --color-forest-dark: #1B4332;
+  --color-forest-light: #40916C;
+  --color-mint: #D8F3DC;
+  --color-mint-dark: #B7E4C7;
+  --color-harvest: #FFB703;
+  --color-harvest-dark: #E5A500;
+  --color-ivory: #F8F9FA;
+
   --font-family-sans: var(--font-inter), system-ui, sans-serif;
   --font-family-serif: var(--font-playfair), Georgia, serif;
 
