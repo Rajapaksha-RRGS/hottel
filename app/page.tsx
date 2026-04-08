@@ -230,6 +230,15 @@ const RoomsSection = () => {
       featured: true,
     },
     {
+      title: "Presidential Suite",
+      price: "1,299",
+      image:
+        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+      size: "250 m² • King Bed • Ocean View",
+      available: true,
+      featured: true,
+    },
+    {
       title: "Grand Deluxe",
       price: "599",
       image:
