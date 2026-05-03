@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';  
 import { Search } from 'lucide-react';  
-import Footer from '../components/Footer';
-import Navigation from '../components/Herder';
+import Footer from '../../components/components/Footer';
+import Navigation from '../../components/components/Herder';
 
-import TourCard from '../components/toureCard';
+import TourCard from '../../components/components/toureCard';
 
 const categories = ["All Tours", "Cultural", "Wildlife", "Adventure"];
 

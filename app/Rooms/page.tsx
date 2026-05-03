@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSearch } from "@/context/SearchContext";
 import { motion } from "framer-motion";
-import FilterBar from "@/app/components/FilterBar";
-import RoomCard from "@/app/components/RoomCard";
-import QuickViewDrawer from "@/app/components/QuickViewDrawer";
-import Navigation from "@/app/components/Herder";
-import Footer from "@/app/components/Footer";
+import FilterBar from "@/components/components/FilterBar";
+import RoomCard from "@/components/components/RoomCard";
+import QuickViewDrawer from "@/components/components/QuickViewDrawer";
+import Navigation from "@/components/components/Herder";
+import Footer from "@/components/components/Footer";
 
 interface Room {
   id: string;

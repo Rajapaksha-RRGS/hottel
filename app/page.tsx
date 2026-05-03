@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Herder";
+import Navigation from "@/components/components/Herder";
 import Link from "next/link";
 import { useSearch } from "@/context/SearchContext";
-import Footer from "./components/Footer";
+import Footer from "../components/components/Footer";
 
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
@@ -30,7 +30,7 @@ import {
   Heart,
 } from "lucide-react";
 
-import UserProfile from "./components/UseProfile";
+import UserProfile from "../components/components/UseProfile";
 
 // Navigation Component
 
