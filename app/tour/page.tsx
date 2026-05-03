@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';  
 import { Search } from 'lucide-react';  
 import Footer from '../components/Footer';
+import Navigation from '../components/Herder';
 
 import TourCard from '../components/toureCard';
 
@@ -21,6 +22,7 @@ export default function ToursPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Hero Section */}
+      <Navigation />
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/40 z-10" />
         <img 

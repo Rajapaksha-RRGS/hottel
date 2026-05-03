@@ -17,6 +17,9 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api/admin")) {
     return NextResponse.next();
   }
+   if (request.nextUrl.pathname.startsWith("/api/rooms")) {
+    return NextResponse.next();
+  }
   if (!token) {
     // 3. Token එකක් නැතිනම් Error එකක් යැවීම
     return NextResponse.json(
@@ -55,5 +58,5 @@ export async function proxy(request: NextRequest) {
 
 // 7. මෙම Middleware එක ක්‍රියාත්මක විය යුතු Path තෝරන්න
 export const config = {
-  matcher: ["/api/staff/:path*", "/api/admin/:path*"],
+  matcher: ["/api/staff/:path*", "/api/admin/:path*", "/api/rooms/:path*"],
 };
