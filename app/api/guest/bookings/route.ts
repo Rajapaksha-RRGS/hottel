@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import RoomBooking from '@/models/RoomBokking';
+import '@/models/Room'; // Required for .populate('room')
 
 export async function GET(request: NextRequest) {
   try {
