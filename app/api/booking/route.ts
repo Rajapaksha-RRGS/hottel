@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongoose";
 import Booking from "@/models/RoomBokking";
 import Room from "@/models/Room";
 import mongoose from "mongoose";
+import { sendBookingConfirmationEmail } from "@/lib/email";
 
 export async function GET(request: Request) {
     try {
@@ -54,150 +55,126 @@ export async function POST(request: Request) {
     try {
         await connectDB();
         const body = await request.json();
-        const { roomId, roomName, roomPrice, userId, userName, guests, checkInDate, checkOutDate } = body;
 
-        console.log("📝 Booking attempt:", { roomId, roomName, userId, userName, guests, checkInDate, checkOutDate });
+        // ─── Destructure – now includes userEmail & userPhone ──────────────
+        const {
+            roomId,
+            roomName,
+            roomPrice,
+            userId,
+            userName,
+            userEmail,      // ← Guest's real email (was missing before)
+            userPhone,      // ← Guest's phone (optional)
+            guests,
+            checkInDate,
+            checkOutDate,
+            specialRequests,
+        } = body;
 
-        // Validate each required field with specific error messages
-        if (!roomId) {
-            console.error("❌ Missing roomId");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: Room ID"
-            }, { status: 400 });
-        }
+        console.log("📝 Booking attempt:", { roomId, roomName, userEmail, userName, guests });
 
-        if (!userId) {
-            console.error("❌ Missing userId");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: User ID"
-            }, { status: 400 });
-        }
+        // ─── Validation ────────────────────────────────────────────────────
+        if (!roomId) return NextResponse.json({ ok: false, message: "Missing: Room ID" }, { status: 400 });
+        if (!userId) return NextResponse.json({ ok: false, message: "Missing: User ID" }, { status: 400 });
+        if (!roomName) return NextResponse.json({ ok: false, message: "Missing: Room Name" }, { status: 400 });
+        if (!userEmail) return NextResponse.json({ ok: false, message: "Missing: Guest email" }, { status: 400 });
+        if (roomPrice === undefined || roomPrice === null) return NextResponse.json({ ok: false, message: "Missing: Room Price" }, { status: 400 });
+        if (!checkInDate) return NextResponse.json({ ok: false, message: "Missing: Check-in Date" }, { status: 400 });
+        if (!checkOutDate) return NextResponse.json({ ok: false, message: "Missing: Check-out Date" }, { status: 400 });
 
-        if (!roomName) {
-            console.error("❌ Missing roomName");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: Room Name"
-            }, { status: 400 });
-        }
-
-        if (roomPrice === undefined || roomPrice === null) {
-            console.error("❌ Missing or invalid roomPrice");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: Room Price"
-            }, { status: 400 });
-        }
-
-        if (!checkInDate) {
-            console.error("❌ Missing checkInDate");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: Check-in Date"
-            }, { status: 400 });
-        }
-
-        if (!checkOutDate) {
-            console.error("❌ Missing checkOutDate");
-            return NextResponse.json({
-                ok: false,
-                message: "Missing required booking information: Check-out Date"
-            }, { status: 400 });
-        }
-
-        // Validate dates
         const start = new Date(checkInDate);
-        const end = new Date(checkOutDate);
+        const end   = new Date(checkOutDate);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-            console.error("❌ Invalid date format");
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid date format"
-            }, { status: 400 });
+            return NextResponse.json({ ok: false, message: "Invalid date format" }, { status: 400 });
         }
-
         if (start >= end) {
-            console.error("❌ Check-out date must be after check-in date");
-            return NextResponse.json({
-                ok: false,
-                message: "Check-out date must be after check-in date"
-            }, { status: 400 });
+            return NextResponse.json({ ok: false, message: "Check-out must be after check-in" }, { status: 400 });
         }
 
-        // Create booking object with proper types
-        let roomObjectId;
-
+        // ─── Resolve Room ObjectId ─────────────────────────────────────────
+        let roomObjectId: mongoose.Types.ObjectId;
         try {
-            if (mongoose.Types.ObjectId.isValid(roomId)) {
-                roomObjectId = new mongoose.Types.ObjectId(roomId);
-            } else {
-                roomObjectId = new mongoose.Types.ObjectId();
-                console.log("⚠️  Creating virtual room reference for mock ID:", roomId);
-            }
-        } catch (err) {
-            console.error("❌ Error creating ObjectId:", err);
+            roomObjectId = mongoose.Types.ObjectId.isValid(roomId)
+                ? new mongoose.Types.ObjectId(roomId)
+                : new mongoose.Types.ObjectId();
+        } catch {
             roomObjectId = new mongoose.Types.ObjectId();
         }
 
-        // Calculate price
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const totalPrice = diffDays * (roomPrice || 0);
+        // ─── Resolve real Room document for email (optional enrichment) ────
+        let resolvedRoom: { roomNumber: string; type: string } | null = null;
+        try {
+            if (mongoose.Types.ObjectId.isValid(roomId)) {
+                resolvedRoom = await Room.findById(roomObjectId).select('roomNumber type').lean() as any;
+            }
+        } catch { /* non-fatal */ }
 
-        console.log("💰 Booking price:", { pricePerNight: roomPrice, nights: diffDays, totalPrice });
+        // ─── Calculate price ───────────────────────────────────────────────
+        const nights      = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const totalAmount = nights * (roomPrice || 0);
 
-        // Create booking
+        console.log("💰 Price:", { pricePerNight: roomPrice, nights, totalAmount });
+
+        // ─── Save Booking ──────────────────────────────────────────────────
         const newBooking = new Booking({
-            guestName: userName || "Guest",
-            guestEmail: "guest@vitaminseahotel.com",
-            guestPhone: "0000000000",
-            room: roomObjectId,
-            checkInDate: start,
-            checkOutDate: end,
+            guestName:      userName  || "Guest",
+            guestEmail:     userEmail,                          // ← Real email saved
+            guestPhone:     userPhone || "Not provided",
+            room:           roomObjectId,
+            checkInDate:    start,
+            checkOutDate:   end,
             numberOfGuests: guests || 1,
-            totalAmount: totalPrice,
+            totalAmount,
             advancePayment: 0,
-            paymentStatus: "Pending",
-            status: "Confirmed",
-            notes: `Room: ${roomName} (ID: ${roomId}), Guests: ${guests || 1}`
+            paymentStatus:  "Pending",
+            status:         "Confirmed",
+            specialRequests: specialRequests || "",
+            notes: `Room: ${roomName} (ID: ${roomId}), Guests: ${guests || 1}`,
         });
 
-        const savedBooking = await newBooking.save();
-        console.log("✅ Booking saved successfully:", savedBooking._id);
+        const saved = await newBooking.save();
+        console.log("✅ Booking saved:", saved._id);
+
+        // ─── Send Confirmation Email (non-blocking – errors logged, not thrown) ──
+        const bookingRef = saved._id.toString().slice(-8).toUpperCase();
+        try {
+            await sendBookingConfirmationEmail({
+                guestName:      userName || "Guest",
+                guestEmail:     userEmail,
+                bookingId:      bookingRef,
+                roomType:       resolvedRoom?.type  || roomName,
+                roomNumber:     resolvedRoom?.roomNumber || roomId,
+                checkInDate:    start.toISOString(),
+                checkOutDate:   end.toISOString(),
+                numberOfGuests: guests || 1,
+                totalAmount,
+                nights,
+            });
+        } catch (emailErr) {
+            // Email failure must NOT fail the booking response
+            console.error("⚠️  Email send failed (booking still confirmed):", emailErr);
+        }
 
         return NextResponse.json({
             ok: true,
-            message: "Booking created successfully!",
+            message: "Booking confirmed! A confirmation email has been sent.",
             data: {
-                bookingId: savedBooking._id,
-                roomName: roomName,
-                totalPrice: totalPrice,
-                nights: diffDays,
-                checkIn: start.toLocaleDateString(),
-                checkOut: end.toLocaleDateString()
-            }
+                bookingId:  saved._id,
+                bookingRef,
+                roomName,
+                totalAmount,
+                nights,
+                checkIn:    start.toLocaleDateString(),
+                checkOut:   end.toLocaleDateString(),
+            },
         }, { status: 201 });
 
     } catch (error) {
         console.error("❌ Booking error:", error);
-
-        let errorMessage = "Internal server error";
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-
         return NextResponse.json({
             ok: false,
-            message: errorMessage
+            message: error instanceof Error ? error.message : "Internal server error",
         }, { status: 500 });
     }
 }
-
-
-
-
-
-
