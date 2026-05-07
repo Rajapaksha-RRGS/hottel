@@ -18,6 +18,8 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 const menuItems = [
@@ -54,9 +56,8 @@ const menuItems = [
   },
 ];
 
-export default function GuestSidebar({ isOpen, onClose }: SidebarProps) {
+export default function GuestSidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
@@ -81,17 +82,14 @@ export default function GuestSidebar({ isOpen, onClose }: SidebarProps) {
           bg-charcoal/95 backdrop-blur-xl border-r border-bone/10`}
       >
         {/* Branding */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-bone/10">
-          {!isCollapsed && (
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-serif text-xl text-gold tracking-wider">
-                VITAMIN SEA
-              </span>
-            </Link>
-          )}
-          {isCollapsed && (
-            <span className="font-serif text-lg text-gold mx-auto">VS</span>
-          )}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-bone/10 overflow-hidden relative">
+          <Link href="/" className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${isCollapsed ? 'mx-auto' : ''}`}>
+            <span className={`font-serif text-gold transition-all duration-300 whitespace-nowrap ${
+              isCollapsed ? 'text-lg' : 'text-xl tracking-wider'
+            }`}>
+              {isCollapsed ? 'VS' : 'VITAMIN SEA'}
+            </span>
+          </Link>
 
           {/* Mobile close */}
           <button
@@ -103,14 +101,14 @@ export default function GuestSidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Guest label */}
-        <div className={`px-4 py-3 border-b border-bone/5 ${isCollapsed ? 'text-center' : ''}`}>
-          {!isCollapsed ? (
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gold/60 font-medium">
-              Guest Portal
-            </p>
-          ) : (
-            <p className="text-[9px] uppercase text-gold/60">GP</p>
-          )}
+        <div className={`py-3 border-b border-bone/5 flex items-center overflow-hidden transition-all duration-300 ${
+          isCollapsed ? 'justify-center px-0' : 'px-4'
+        }`}>
+          <p className={`uppercase text-gold/60 font-medium transition-all duration-300 whitespace-nowrap ${
+            isCollapsed ? 'text-[9px] tracking-normal' : 'text-[10px] tracking-[0.2em]'
+          }`}>
+            {isCollapsed ? 'GP' : 'Guest Portal'}
+          </p>
         </div>
 
         {/* Navigation Items */}
@@ -139,13 +137,11 @@ export default function GuestSidebar({ isOpen, onClose }: SidebarProps) {
                     active ? 'text-gold' : 'text-bone/40 group-hover:text-gold/80'
                   }`}
                 />
-                {!isCollapsed && (
-                  <span className={`text-sm font-medium tracking-wide ${
-                    active ? 'text-gold' : ''
-                  }`}>
-                    {item.name}
-                  </span>
-                )}
+                <span className={`text-sm font-medium tracking-wide whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                  isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-1'
+                } ${active ? 'text-gold' : ''}`}>
+                  {item.name}
+                </span>
               </Link>
             );
           })}
@@ -154,7 +150,7 @@ export default function GuestSidebar({ isOpen, onClose }: SidebarProps) {
         {/* Collapse toggle (desktop only) */}
         <div className="hidden lg:flex items-center justify-center py-4 border-t border-bone/10">
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={onToggleCollapse}
             className="p-2 rounded-lg text-bone/40 hover:text-gold hover:bg-bone/5 transition-all"
           >
             {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
