@@ -48,7 +48,7 @@ export default function LoginPage() {
     } else if (role === "Waiter") {
       router.push("/waiter/dashboard");
     } else if (role === "Receptionist") {
-      router.push("/receptionist/dashboard");
+      router.push("/DashboardResiption");
     } else {
       router.push("/");
       console.log("Default dashboard"); // Default dashboard
@@ -57,7 +57,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl: "/" });
+    await signIn("google", { callbackUrl: "http://localhost:3000/" });
   };
 
   return (

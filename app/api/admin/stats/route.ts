@@ -39,7 +39,7 @@ export async function GET() {
     ] = await Promise.all([
       RoomBooking.countDocuments(), // total booking
       Room.countDocuments(), // total room
-      RoomBooking.countDocuments({ status: "checked-in" }), //activeBookings
+      RoomBooking.countDocuments({ status: "Checked-In" }), //activeBookings
       FoodOrder.find({ orderStatus: "Served" }).select("totalBill"), // servedFoodOrders
       RoomBooking.aggregate([
         {
