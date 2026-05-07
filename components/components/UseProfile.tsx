@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
@@ -17,6 +17,24 @@ export default function UserProfile() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isGuest =
+    status === "authenticated" &&
+    (!session?.user?.role ||
+      session?.user?.role === "Guest" ||
+      session?.user?.role === "User");
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogin = () => {
     router.push("/login");
@@ -29,7 +47,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       {/* Not logged in - Show Login Button */}
       {status === "unauthenticated" ? (
         <button
@@ -75,7 +93,7 @@ export default function UserProfile() {
 
           {/* Dropdown Menu */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-72 glass rounded-lg overflow-hidden z-50 border border-bone/10">
+            <div className="absolute right-0 mt-3 w-72 glass rounded-lg overflow-hidden z-50 border border-bone/10 animate-fade-in-up">
               {/* Header */}
               <div className="px-6 py-4 border-b border-bone/10 bg-gold/10">
                 <p className="font-serif text-lg text-bone">
@@ -88,8 +106,25 @@ export default function UserProfile() {
 
               {/* Menu Items */}
               <div className="py-2">
+                {/* Guest Dashboard Link */}
+                {isGuest && (
+                  <>
+                    <Link
+                      href="/guest/dashboard"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 px-6 py-3 text-gold hover:bg-gold/10 transition-all duration-200"
+                    >
+                      <LayoutDashboard size={18} />
+                      <span className="text-sm font-medium">
+                        Go to Dashboard
+                      </span>
+                    </Link>
+                    <div className="border-t border-bone/10 my-2 mx-4"></div>
+                  </>
+                )}
+
                 <Link
-                  href="/profile"
+                  href={isGuest ? "/guest/dashboard/profile" : "/profile"}
                   onClick={() => setIsProfileOpen(false)}
                   className="flex items-center gap-3 px-6 py-3 text-bone/80 hover:text-gold hover:bg-bone/5 transition-all duration-200"
                 >
@@ -98,7 +133,7 @@ export default function UserProfile() {
                 </Link>
 
                 <Link
-                  href="/bookings"
+                  href={isGuest ? "/guest/dashboard/bookings" : "/bookings"}
                   onClick={() => setIsProfileOpen(false)}
                   className="flex items-center gap-3 px-6 py-3 text-bone/80 hover:text-gold hover:bg-bone/5 transition-all duration-200"
                 >
@@ -107,12 +142,12 @@ export default function UserProfile() {
                 </Link>
 
                 <Link
-                  href="/invoices"
+                  href={isGuest ? "/guest/dashboard/payments" : "/invoices"}
                   onClick={() => setIsProfileOpen(false)}
                   className="flex items-center gap-3 px-6 py-3 text-bone/80 hover:text-gold hover:bg-bone/5 transition-all duration-200"
                 >
                   <FileText size={18} className="text-gold/70" />
-                  <span className="text-sm">My Invoices</span>
+                  <span className="text-sm">My Payments</span>
                 </Link>
 
                 {/* Admin Menu - Show only for Admin users */}
