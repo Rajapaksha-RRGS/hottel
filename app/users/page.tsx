@@ -1,3 +1,5 @@
+// Users page that fetches and displays a list of users from an API
+
 import React from 'react'
 
 const Userspage = async () => {
