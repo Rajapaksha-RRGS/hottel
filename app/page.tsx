@@ -425,10 +425,9 @@ const BookingBar = () => {
       return;
     }
 
-    // Navigate to /rooms with query parameters
+    // Navigate to /rooms with URL query parameters
     setSearchData({ checkIn, checkOut, guests });
-
-    router.push("/Rooms");
+    router.push(`/rooms?checkIn=${checkIn}&checkOut=${checkOut}`);
   };
 
   return (
