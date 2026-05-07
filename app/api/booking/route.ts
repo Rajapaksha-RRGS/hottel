@@ -4,6 +4,52 @@ import Booking from "@/models/RoomBokking";
 import Room from "@/models/Room";
 import mongoose from "mongoose";
 
+export async function GET(request: Request) {
+    try {
+        await connectDB();
+
+        const { searchParams } = new URL(request.url);
+        const year = searchParams.get("year");
+        const month = searchParams.get("month");
+
+        let query: any = {
+            status: { $ne: "Cancelled" }
+        };
+
+        // Filter by year and month if provided
+        if (year && month) {
+            const startDate = new Date(Number(year), Number(month) - 1, 1);
+            const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59);
+
+            query = {
+                ...query,
+                $or: [
+                    { checkInDate: { $gte: startDate, $lte: endDate } },
+                    { checkOutDate: { $gte: startDate, $lte: endDate } },
+                    { checkInDate: { $lt: startDate }, checkOutDate: { $gt: endDate } }
+                ]
+            };
+        }
+
+        const bookings = await Booking.find(query)
+            .populate("room", "roomNumber type")
+            .sort({ checkInDate: 1 });
+
+        return NextResponse.json({
+            ok: true,
+            bookings,
+            count: bookings.length
+        }, { status: 200 });
+
+    } catch (error) {
+        console.error("❌ Get bookings error:", error);
+        return NextResponse.json({
+            ok: false,
+            message: "Failed to fetch bookings"
+        }, { status: 500 });
+    }
+}
+
 export async function POST(request: Request) {
     try {
         await connectDB();

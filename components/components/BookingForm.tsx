@@ -69,7 +69,16 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setAvailabilityMessage('Checking availability...');
 
     try {
-      const roomId = room.roomNumber || room._id || room.id;
+      // Prefer MongoDB ObjectId, fall back to roomNumber
+      const roomId = room._id || room.roomNumber || room.id;
+
+      if (!roomId) {
+        setAvailabilityStatus('error');
+        setAvailabilityMessage('Error: Room information not available');
+        console.error('Missing roomId in room object:', room);
+        return;
+      }
+
       const response = await fetch('/api/booking/check-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,7 +104,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       setAvailabilityMessage('Error checking availability');
       console.error('Availability check error:', err);
     }
-  }, [room.roomNumber, room._id, room.id]);
+  }, [room._id, room.roomNumber, room.id]);
 
   // Auto-check availability on mount when dates are pre-filled
   useEffect(() => {
