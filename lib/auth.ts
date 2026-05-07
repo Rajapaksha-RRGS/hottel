@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
+import Gest from "@/models/Gest";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
@@ -63,18 +64,50 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }: any) {
+    async signIn({ user, account }) {
+      // For Google sign-in, ensure guest record exists
+      if (account?.provider === "google" && user.email) {
+        try {
+          await connectDB();
+          let guest = await Gest.findOne({ email: user.email });
+
+          if (!guest) {
+            // Auto-create a guest record from Google profile
+            guest = await Gest.create({
+              name: user.name || "Guest",
+              email: user.email,
+              phone: "Not provided",
+              message: "Signed up via Google",
+              password: "google-oauth-no-password",
+              image: user.image || "",
+              isActive: true,
+            });
+          }
+        } catch (error) {
+          console.error("Error creating guest record:", error);
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account }: any) {
       if (user) {
         token.id = user.id;
-        token.role = user.role || "User";
         token.picture = user.image || null;
+
+        // Determine role based on provider
+        if (account?.provider === "google") {
+          token.role = "Guest";
+        } else {
+          token.role = user.role || "User";
+        }
       }
       return token;
     },
 
     async session({ session, token }: any) {
       if (session.user) {
-        (session.user as any).id = token.id;
+        (session.user as any).id = token.id || token.sub;
         (session.user as any).role = token.role;
         (session.user as any).image = token.picture;
       }
