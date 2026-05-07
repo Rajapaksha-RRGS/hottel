@@ -48,7 +48,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     const end = new Date(checkOutDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const pricePerNight = room.pricePerNight || room.price || 0;
+    const pricePerNight = room.pricePerNight || 0;
     return diffDays * pricePerNight;
   };
 
@@ -69,8 +69,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setAvailabilityMessage('Checking availability...');
 
     try {
-      // Prefer MongoDB ObjectId, fall back to roomNumber
-      const roomId = room._id || room.roomNumber || room.id;
+      const roomId = room._id?.toString() || room.roomNumber;
 
       if (!roomId) {
         setAvailabilityStatus('error');
@@ -78,7 +77,6 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         console.error('Missing roomId in room object:', room);
         return;
       }
-
       const response = await fetch('/api/booking/check-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,7 +102,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       setAvailabilityMessage('Error checking availability');
       console.error('Availability check error:', err);
     }
-  }, [room._id, room.roomNumber, room.id]);
+  }, [room.roomNumber, room._id]);
 
   // Auto-check availability on mount when dates are pre-filled
   useEffect(() => {
@@ -150,7 +148,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       return;
     }
 
-    const maxOccupancy = room.maxOccupancy || room.maxGuests || 2;
+    const maxOccupancy = room.maxOccupancy || 2;
     if (guests < 1 || guests > maxOccupancy) {
       setError(`Guests must be between 1 and ${maxOccupancy}`);
       return;
@@ -166,10 +164,10 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       return;
     }
 
-    // Map room properties (handle both DB model and display room structures)
-    const roomId = room.roomNumber || room._id || room.id;
-    const roomName = room.roomName || room.name || 'Room';
-    const roomPrice = room.pricePerNight || room.price;
+    // Map room properties
+    const roomId = room._id?.toString() || room.roomNumber;
+    const roomName = `${room.type} – Room ${room.roomNumber}`;
+    const roomPrice = room.pricePerNight;
 
     // Validate required room data
     if (!roomId) {
@@ -200,13 +198,14 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
 
     try {
       const payload = {
-        roomId: roomId,
-        roomName: roomName,
-        roomPrice: roomPrice,
-        userId: session?.user?.id || "temp-" + Date.now(),
-        userName: session?.user?.name || "Guest User",
-        guests: guests,
-        checkInDate: new Date(checkInDate).toISOString(),
+        roomId,
+        roomName,
+        roomPrice,
+        userId:    session?.user?.id    || "temp-" + Date.now(),
+        userName:  session?.user?.name  || "Guest",
+        userEmail: session?.user?.email || "",   // ← Real email for DB + confirmation
+        guests,
+        checkInDate:  new Date(checkInDate).toISOString(),
         checkOutDate: new Date(checkOutDate).toISOString(),
       };
 
@@ -214,9 +213,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
 
       const response = await fetch("/api/booking", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -256,9 +253,15 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg"
+          className="bg-green-50 border border-green-400 text-green-800 px-4 py-4 rounded-lg space-y-2"
         >
-          ✅ Booking confirmed! Check your email for details.
+          <p className="font-semibold">✅ Booking confirmed! A confirmation email has been sent.</p>
+          <a
+            href="/guest/dashboard"
+            className="inline-block mt-1 text-sm underline text-green-700 hover:text-green-900"
+          >
+            → View booking in your dashboard
+          </a>
         </motion.div>
       )}
 
@@ -339,7 +342,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
           onChange={(e) => setGuests(Number(e.target.value))}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-slate-900 bg-white"
         >
-          {Array.from({ length: (room.maxOccupancy || room.maxGuests || 2) }, (_, i) => i + 1).map((num) => (
+          {Array.from({ length: room.maxOccupancy || 2 }, (_, i) => i + 1).map((num) => (
             <option key={num} value={num}>
               {num} {num === 1 ? 'Guest' : 'Guests'}
             </option>
@@ -356,7 +359,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         >
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Price per night:</span>
-            <span className="font-semibold text-gray-900">${room.pricePerNight || room.price}</span>
+            <span className="font-semibold text-gray-900">${room.pricePerNight}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Number of nights:</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSearch } from "@/context/SearchContext";
 import { motion } from "framer-motion";
@@ -26,7 +26,7 @@ interface Room {
   maxGuests: number;
 }
 
-export default function RoomPage() {
+function RoomPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlCheckIn = searchParams.get("checkIn") || "";
@@ -432,5 +432,13 @@ export default function RoomPage() {
       />
       <Footer />
     </div>
+  );
+}
+
+export default function RoomPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading rooms...</div>}>
+      <RoomPageContent />
+    </Suspense>
   );
 }
