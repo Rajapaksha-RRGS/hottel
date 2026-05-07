@@ -7,14 +7,27 @@ interface IOrderItem {
 }
 
 export interface IFoodOrder extends Document {
-  roomBookingId: mongoose.Types.ObjectId; // කාමරයේ බිලට එකතු කිරීමට
+  // මේ දෙකෙන් එකක් අනිවාර්යයෙන් තියෙන්න ඕනේ
+  roomBookingId?: mongoose.Types.ObjectId; // In-house guest කෙනෙක් නම්
+  tableNumber?: string;                  // එළියෙන් ආපු (Walk-in) කෙනෙක් නම්
+  
+  orderType: 'Room' | 'Table';           // ඕඩර් එක මොන වගේද කියලා ඉක්මනින් දැනගන්න
   items: IOrderItem[];
   totalBill: number;
   orderStatus: 'Pending' | 'Served' | 'Billed';
 }
 
 const FoodOrderSchema = new Schema<IFoodOrder>({
-  roomBookingId: { type: Schema.Types.ObjectId, ref: 'RoomBooking', required: true },
+  // roomBookingId required true එක අයින් කළා Table orders වලට ඉඩ දෙන්න
+  roomBookingId: { type: Schema.Types.ObjectId, ref: 'RoomBooking', required: false },
+  tableNumber: { type: String, required: false }, 
+  
+  orderType: { 
+    type: String, 
+    enum: ['Room', 'Table'], 
+    required: true 
+  },
+  
   items: [{
     foodItem: { type: Schema.Types.ObjectId, ref: 'FoodItem', required: true },
     quantity: { type: Number, required: true, min: 1 },

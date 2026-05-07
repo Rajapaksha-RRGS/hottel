@@ -7,6 +7,7 @@ import { CalendarDays, Search, Check, X, Clock } from 'lucide-react';
 export default function ReceptionBookings() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -23,6 +24,29 @@ export default function ReceptionBookings() {
       console.error(err);
     }
     setLoading(false);
+  };
+
+  const handleCheckIn = async (bookingId: string) => {
+    setActionLoading(bookingId);
+    try {
+      const res = await fetch('/api/booking/check-in', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        console.log('✅ Check-in successful');
+        fetchData();
+      } else {
+        console.error('❌ Check-in failed:', json.message);
+      }
+    } catch (err) {
+      console.error('❌ Check-in error:', err);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (loading) {
@@ -104,8 +128,17 @@ export default function ReceptionBookings() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {booking.status === 'Confirmed' && (
-                        <button title="Check In" className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg border border-emerald-500/40 transition-colors inline-flex">
-                          <Check className="w-4 h-4" />
+                        <button
+                          title="Check In"
+                          onClick={() => handleCheckIn(booking._id)}
+                          disabled={actionLoading === booking._id}
+                          className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-400 rounded-lg border border-emerald-500/40 transition-colors inline-flex"
+                        >
+                          {actionLoading === booking._id ? (
+                            <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Check className="w-4 h-4" />
+                          )}
                         </button>
                       )}
                       {booking.status === 'Checked-In' && (

@@ -47,6 +47,8 @@ type CartItem = {
   subTotal: number;
 };
 
+const TABLES = Array.from({ length: 12 }, (_, i) => `Table ${String(i + 1).padStart(2, '0')}`);
+
 const CATEGORIES = [
   { id: 'Appetizer', label: 'Appetizer', icon: Salad, color: 'from-emerald-400/20 to-emerald-600/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
   { id: 'Main', label: 'Main Course', icon: Utensils, color: 'from-amber-400/20 to-amber-600/10', border: 'border-amber-500/30', text: 'text-amber-400' },
@@ -76,8 +78,14 @@ export default function ReceptionNewOrder() {
             (b: any) => b.status === 'Checked-In'
           );
           setBookings(checkedIn);
+          if (checkedIn.length === 0) {
+            console.warn('No checked-in bookings found. Rooms optgroup will show "No active bookings".');
+          }
         }
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setBookings([]);
+      }
     })();
   }, []);
 
@@ -123,24 +131,66 @@ export default function ReceptionNewOrder() {
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
+  const isRoomSelection = (value: string) => {
+    const isRoom = bookings.some((b) => b._id === value);
+    return isRoom;
+  };
+
+  const getSelectionInfo = () => {
+    if (!selectedTable) return null;
+
+    const isRoom = isRoomSelection(selectedTable);
+    if (isRoom) {
+      const booking = bookings.find((b) => b._id === selectedTable);
+      if (booking) {
+        return {
+          type: 'room',
+          booking,
+          display: `Room ${booking.room?.roomNumber || 'Pending Room'} — ${booking.guestName || 'Guest'}`,
+          guestName: booking.guestName || 'Guest',
+          roomNumber: booking.room?.roomNumber || 'Pending Room',
+        };
+      }
+    }
+
+    return {
+      type: 'table',
+      booking: null,
+      display: selectedTable,
+      guestName: null,
+      roomNumber: null,
+    };
+  };
+
   // Place order
   const placeOrder = async () => {
     if (!selectedTable || cart.length === 0) return;
     setPlacing(true);
     try {
+      const selection = getSelectionInfo();
+      const payload: any = {
+        items: cart.map((c) => ({ foodItem: c.foodItem, quantity: c.quantity, subTotal: c.subTotal })),
+        totalBill: total,
+      };
+
+      if (selection?.type === 'room') {
+        payload.roomBookingId = selectedTable;
+        payload.orderType = 'Room';
+      } else {
+        payload.tableNumber = selectedTable;
+        payload.orderType = 'Table';
+      }
+
       const res = await fetch('/api/reception/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomBookingId: selectedTable,
-          items: cart.map((c) => ({ foodItem: c.foodItem, quantity: c.quantity, subTotal: c.subTotal })),
-          totalBill: total,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
         setSuccessMsg('Order sent to kitchen!');
         setCart([]);
+        setSelectedTable('');
         setTimeout(() => setSuccessMsg(''), 3000);
       }
     } catch (err) {
@@ -149,7 +199,7 @@ export default function ReceptionNewOrder() {
     setPlacing(false);
   };
 
-  const selectedBooking = bookings.find((b) => b._id === selectedTable);
+  const selection = getSelectionInfo();
 
   return (
     <div className="flex gap-6 h-[calc(100vh-144px)]">
@@ -264,15 +314,38 @@ export default function ReceptionNewOrder() {
             style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
           >
             <option value="">Select Room / Table</option>
-            {bookings.map((b: any) => (
-              <option key={b._id} value={b._id}>
-                Room {b.room?.roomNumber || '?'} — {b.guestName}
-              </option>
-            ))}
+            <optgroup label="🛏️ Rooms">
+              {bookings.length === 0 ? (
+                <option disabled>No active bookings</option>
+              ) : (
+                bookings.map((b: any) => (
+                  <option key={b._id} value={b._id}>
+                    Room {b.room?.roomNumber || 'Pending Room'} — {b.guestName || 'Guest'}
+                  </option>
+                ))
+              )}
+            </optgroup>
+            <optgroup label="🍽️ Tables">
+              {TABLES.map((table) => (
+                <option key={table} value={table}>
+                  {table}
+                </option>
+              ))}
+            </optgroup>
           </select>
-          {selectedBooking && (
+          {selection && (
             <p className="text-[11px] text-slate-400 mt-2">
-              Guest: <span className="text-slate-300">{selectedBooking.guestName}</span>
+              {selection.type === 'room' ? (
+                <>
+                  🏨 Room: <span className="text-slate-300">{selection.roomNumber}</span>
+                  <br />
+                  👤 Guest: <span className="text-slate-300">{selection.guestName}</span>
+                </>
+              ) : (
+                <>
+                  🍽️ Table: <span className="text-slate-300">{selection.display}</span>
+                </>
+              )}
             </p>
           )}
         </div>

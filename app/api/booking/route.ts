@@ -8,16 +8,56 @@ export async function POST(request: Request) {
     try {
         await connectDB();
         const body = await request.json();
-        const { roomId, roomName, roomPrice, userId, userName, checkInDate, checkOutDate } = body;
+        const { roomId, roomName, roomPrice, userId, userName, guests, checkInDate, checkOutDate } = body;
 
-        console.log("📝 Booking attempt:", { roomId, roomName, userId, userName, checkInDate, checkOutDate });
+        console.log("📝 Booking attempt:", { roomId, roomName, userId, userName, guests, checkInDate, checkOutDate });
 
-        // Validate input
-        if (!roomId || !userId || !roomName || !roomPrice) {
-            console.error("❌ Missing required fields");
+        // Validate each required field with specific error messages
+        if (!roomId) {
+            console.error("❌ Missing roomId");
             return NextResponse.json({
                 ok: false,
-                message: "Missing required booking information"
+                message: "Missing required booking information: Room ID"
+            }, { status: 400 });
+        }
+
+        if (!userId) {
+            console.error("❌ Missing userId");
+            return NextResponse.json({
+                ok: false,
+                message: "Missing required booking information: User ID"
+            }, { status: 400 });
+        }
+
+        if (!roomName) {
+            console.error("❌ Missing roomName");
+            return NextResponse.json({
+                ok: false,
+                message: "Missing required booking information: Room Name"
+            }, { status: 400 });
+        }
+
+        if (roomPrice === undefined || roomPrice === null) {
+            console.error("❌ Missing or invalid roomPrice");
+            return NextResponse.json({
+                ok: false,
+                message: "Missing required booking information: Room Price"
+            }, { status: 400 });
+        }
+
+        if (!checkInDate) {
+            console.error("❌ Missing checkInDate");
+            return NextResponse.json({
+                ok: false,
+                message: "Missing required booking information: Check-in Date"
+            }, { status: 400 });
+        }
+
+        if (!checkOutDate) {
+            console.error("❌ Missing checkOutDate");
+            return NextResponse.json({
+                ok: false,
+                message: "Missing required booking information: Check-out Date"
             }, { status: 400 });
         }
 
@@ -43,9 +83,8 @@ export async function POST(request: Request) {
 
         // Create booking object with proper types
         let roomObjectId;
-        
+
         try {
-            // If roomId is a valid MongoDB ObjectId, use it; otherwise create a new one
             if (mongoose.Types.ObjectId.isValid(roomId)) {
                 roomObjectId = new mongoose.Types.ObjectId(roomId);
             } else {
@@ -72,12 +111,12 @@ export async function POST(request: Request) {
             room: roomObjectId,
             checkInDate: start,
             checkOutDate: end,
-            numberOfGuests: 1,
+            numberOfGuests: guests || 1,
             totalAmount: totalPrice,
             advancePayment: 0,
             paymentStatus: "Pending",
             status: "Confirmed",
-            notes: `Room: ${roomName} (ID: ${roomId})`
+            notes: `Room: ${roomName} (ID: ${roomId}), Guests: ${guests || 1}`
         });
 
         const savedBooking = await newBooking.save();
@@ -98,12 +137,12 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error("❌ Booking error:", error);
-        
+
         let errorMessage = "Internal server error";
         if (error instanceof Error) {
             errorMessage = error.message;
         }
-        
+
         return NextResponse.json({
             ok: false,
             message: errorMessage

@@ -48,7 +48,8 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     const end = new Date(checkOutDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays * room.pricePerNight;
+    const pricePerNight = room.pricePerNight || room.price || 0;
+    return diffDays * pricePerNight;
   };
 
   const totalPrice = calculateTotal();
@@ -68,11 +69,12 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setAvailabilityMessage('Checking availability...');
 
     try {
+      const roomId = room.roomNumber || room._id || room.id;
       const response = await fetch('/api/booking/check-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          roomId: room.roomNumber,
+          roomId: roomId,
           checkInDate: new Date(inDate).toISOString(),
           checkOutDate: new Date(outDate).toISOString(),
         }),
@@ -93,7 +95,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       setAvailabilityMessage('Error checking availability');
       console.error('Availability check error:', err);
     }
-  }, [room.roomNumber]);
+  }, [room.roomNumber, room._id, room.id]);
 
   // Auto-check availability on mount when dates are pre-filled
   useEffect(() => {
@@ -128,14 +130,20 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setError(null);
     setSuccess(false);
 
-    // Validation
-    if (!checkInDate || !checkOutDate) {
-      setError('Please select both check-in and check-out dates');
+    // Detailed validation
+    if (!checkInDate) {
+      setError('Please select Check-in Date');
       return;
     }
 
-    if (guests < 1 || guests > room.maxOccupancy) {
-      setError(`Guests must be between 1 and ${room.maxOccupancy}`);
+    if (!checkOutDate) {
+      setError('Please select Check-out Date');
+      return;
+    }
+
+    const maxOccupancy = room.maxOccupancy || room.maxGuests || 2;
+    if (guests < 1 || guests > maxOccupancy) {
+      setError(`Guests must be between 1 and ${maxOccupancy}`);
       return;
     }
 
@@ -144,29 +152,63 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       return;
     }
 
-    // Check availability status before booking
     if (availabilityStatus !== 'available') {
       setError('Please select dates that are available');
+      return;
+    }
+
+    // Map room properties (handle both DB model and display room structures)
+    const roomId = room.roomNumber || room._id || room.id;
+    const roomName = room.roomName || room.name || 'Room';
+    const roomPrice = room.pricePerNight || room.price;
+
+    // Validate required room data
+    if (!roomId) {
+      setError('Room ID is missing');
+      return;
+    }
+
+    if (!roomPrice || roomPrice <= 0) {
+      setError('Room price is invalid');
+      return;
+    }
+
+    // Validate dates format and values
+    const checkInDateTime = new Date(checkInDate).getTime();
+    const checkOutDateTime = new Date(checkOutDate).getTime();
+
+    if (isNaN(checkInDateTime) || isNaN(checkOutDateTime)) {
+      setError('Invalid date format');
+      return;
+    }
+
+    if (checkInDateTime >= checkOutDateTime) {
+      setError('Check-out date must be after check-in date');
       return;
     }
 
     setLoading(true);
 
     try {
+      const payload = {
+        roomId: roomId,
+        roomName: roomName,
+        roomPrice: roomPrice,
+        userId: session?.user?.id || "temp-" + Date.now(),
+        userName: session?.user?.name || "Guest User",
+        guests: guests,
+        checkInDate: new Date(checkInDate).toISOString(),
+        checkOutDate: new Date(checkOutDate).toISOString(),
+      };
+
+      console.log('📤 Booking payload:', payload);
+
       const response = await fetch("/api/booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          roomId: room.roomNumber,
-          roomName: room.roomNumber,
-          roomPrice: room.pricePerNight,
-          userId: session?.user?.id || "temp-" + Date.now(),
-          userName: session?.user?.name || "Guest User",
-          checkInDate: new Date(checkInDate).toISOString(),
-          checkOutDate: new Date(checkOutDate).toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -182,7 +224,6 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       setGuests(1);
       setAvailabilityStatus('idle');
 
-      // Call success callback after 2 seconds
       if (onSuccess) {
         setTimeout(onSuccess, 2000);
       }
@@ -223,37 +264,37 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         </motion.div>
       )}
 
-      {/* Check-in Date */}
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <Calendar className="w-4 h-4 text-purple-600" />
-          Check-in Date
-        </label>
-        <input
-          type="date"
-          min={today}
-          value={checkInDate}
-          onChange={handleCheckInChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-          required
-        />
-      </div>
+     {/* Check-in Date */}
+<div className="space-y-2">
+  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"> {/* text-black-700 වෙනුවට text-slate-700 */}
+    <Calendar className="w-4 h-4 text-purple-600" />
+    Check-in Date
+  </label>
+  <input
+    type="date"
+    min={today}
+    value={checkInDate}
+    onChange={handleCheckInChange}
+    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-black" 
+    required
+  />
+</div>
 
-      {/* Check-out Date */}
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <Calendar className="w-4 h-4 text-purple-600" />
-          Check-out Date
-        </label>
-        <input
-          type="date"
-          min={checkInDate || today}
-          value={checkOutDate}
-          onChange={handleCheckOutChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
-          required
-        />
-      </div>
+{/* Check-out Date */}
+<div className="space-y-2">
+  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+    <Calendar className="w-4 h-4 text-purple-600" />
+    Check-out Date
+  </label>
+  <input
+    type="date"
+    min={checkInDate || today}
+    value={checkOutDate}
+    onChange={handleCheckOutChange}
+    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-black"
+    required
+  />
+</div>
 
       {/* Availability Status */}
       {availabilityMessage && (
@@ -280,16 +321,16 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
 
       {/* Guests */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
           <Users className="w-4 h-4 text-purple-600" />
           Number of Guests
         </label>
         <select
           value={guests}
           onChange={(e) => setGuests(Number(e.target.value))}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-slate-900 bg-white"
         >
-          {Array.from({ length: room.maxOccupancy }, (_, i) => i + 1).map((num) => (
+          {Array.from({ length: (room.maxOccupancy || room.maxGuests || 2) }, (_, i) => i + 1).map((num) => (
             <option key={num} value={num}>
               {num} {num === 1 ? 'Guest' : 'Guests'}
             </option>
@@ -306,7 +347,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         >
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Price per night:</span>
-            <span className="font-semibold text-gray-900">${room.pricePerNight}</span>
+            <span className="font-semibold text-gray-900">${room.pricePerNight || room.price}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Number of nights:</span>
