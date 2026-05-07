@@ -1,4 +1,8 @@
 'use client';
+
+
+// Tours listing page with category filters and search
+
 import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';  
 import { Search } from 'lucide-react';  
@@ -14,9 +18,9 @@ export default function ToursPage() {
 
   // මේවා පසුව API එකෙන් fetch කරන්න පුළුවන්
   const dummyTours = [
-    { name: "Ambewela Dairy Farm Visit", location: "Ella to Ambewela", duration: "1 Day", price: 15000, rating: 5, category: "Cultural", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000", capacity: 20 },
-    { name: "Ambewela - Nuwara Eliya - Ella Scenic Tour", location: "Ambewela to Ella", duration: "1 Day", price: 20000, rating: 4.8, category: "Adventure", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1000", capacity: 10 },
-    { name: "Badulla Waterfall & Nature Hike", location: "Ella to Badulla", duration: "1 Day", price: 1200, rating: 4.5, category: "Wildlife", image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=1000", capacity: 15 },
+    { id: 1, name: "Ambewela Dairy Farm Visit", location: "Ella to Ambewela", duration: "1 Day", price: 15000, rating: 5, category: "Cultural", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000", capacity: 20 },
+    { id: 2, name: "Ambewela - Nuwara Eliya - Ella Scenic Tour", location: "Ambewela to Ella", duration: "1 Day", price: 20000, rating: 4.8, category: "Adventure", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1000", capacity: 10 },
+    { id: 3, name: "Badulla Waterfall & Nature Hike", location: "Ella to Badulla", duration: "1 Day", price: 1200, rating: 4.5, category: "Wildlife", image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=1000", capacity: 15 },
   ];
 
   return (
@@ -26,9 +30,10 @@ export default function ToursPage() {
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/40 z-10" />
         <img 
-          src="https://images.unsplash.com/photo-1588613274291-768233f523c0?auto=format&fit=crop&q=80&w=2000" 
+          src="https://res.cloudinary.com/djvxlhojn/image/upload/v1778144650/tourshero_q63mvv.jpg" 
           className="absolute inset-0 w-full h-full object-cover"
           alt="Sri Lanka Heritage"
+          suppressHydrationWarning
         />
         
         <div className="relative z-20 text-center px-6">

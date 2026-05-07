@@ -1,9 +1,11 @@
 'use client';
 import React from 'react';
 import { Clock, Users, Star, MapPin } from 'lucide-react';
+import Link from 'next/link';
 
 interface TourProps {
   tour: {
+    id: number;
     name: string;
     location: string;
     duration: string;
@@ -17,7 +19,8 @@ interface TourProps {
 
 export default function TourCard({ tour }: TourProps) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group">
+    <Link href={'/tour/' + tour.id}>
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group">
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         <img 
@@ -71,5 +74,6 @@ export default function TourCard({ tour }: TourProps) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }
