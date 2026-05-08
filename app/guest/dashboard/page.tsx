@@ -53,7 +53,9 @@ export default function GuestDashboard() {
     const fetchBookings = async () => {
       if (!session?.user?.email) return;
       try {
-        const res = await fetch(`/api/guest/bookings?email=${encodeURIComponent(session.user.email)}`);
+        const params = new URLSearchParams({ email: session.user.email });
+        if (session.user.name) params.set('name', session.user.name);
+        const res = await fetch(`/api/guest/bookings?${params}`);
         const data = await res.json();
         if (data.ok) {
           setBookings(data.bookings);

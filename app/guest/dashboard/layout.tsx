@@ -14,6 +14,7 @@ export default function GuestDashboardLayout({
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Redirect if not authenticated
   if (status === 'loading') {
@@ -38,10 +39,12 @@ export default function GuestDashboardLayout({
       <GuestSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
       />
 
       {/* Main content area - offset by sidebar width */}
-      <div className="lg:ml-64 transition-all duration-300">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Top Bar */}
         <GuestTopBar onMenuToggle={() => setIsSidebarOpen(true)} />
 
