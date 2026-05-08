@@ -6,6 +6,7 @@ import ReceptionNewOrder from './ReceptionNewOrder';
 import ReceptionBookings from './ReceptionBookings';
 import ReceptionGuests from './ReceptionGuests';
 import ReceptionRooms from './ReceptionRooms';
+import InvoiceManagement from './InvoiceManagement';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +21,7 @@ import {
   LogOut,
   Bell,
   ClipboardPlus,
+  DollarSign,
 } from 'lucide-react';
 
 
@@ -35,6 +37,7 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Top Dashboard', icon: LayoutDashboard },
   { id: 'neworder', label: 'New Order', icon: ClipboardPlus },
   { id: 'orders', label: 'Orders', icon: Coffee },
+  { id: 'invoices', label: 'Invoices', icon: DollarSign },
   { id: 'bookings', label: 'Bookings', icon: CalendarDays },
   { id: 'guests', label: 'Guests', icon: Users },
   { id: 'rooms', label: 'Rooms', icon: BedDouble },
@@ -44,6 +47,7 @@ const menuTitles: Record<string, string> = {
   dashboard: 'Reception Dashboard',
   neworder: 'Place New Order',
   orders: 'Food & Beverage Orders',
+  invoices: 'Invoice Management',
   bookings: 'Booking Management',
   guests: 'Guest Directory',
   rooms: 'Room Status',
@@ -69,6 +73,8 @@ export default function ReceptionLayout() {
         return <ReceptionNewOrder />;
       case 'orders':
         return <ReceptionOrders />;
+      case 'invoices':
+        return <InvoiceManagement />;
       case 'bookings':
         return <ReceptionBookings />;
       case 'guests':
