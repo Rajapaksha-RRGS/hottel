@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     
     let query = {};
     if (category && category !== 'All') {
-      query = { category };
+      query = { category: category.trim() };
     }
     
     const items = await FoodItem.find(query).sort({ createdAt: -1 });
@@ -25,10 +25,11 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
+    const categoryValue = body.category ? body.category.trim() : body.category;
     
     const newItem = new FoodItem({
       name: body.name,
-      category: body.category,
+      category: categoryValue,
       prices: body.prices,
       image: body.image,
       prepTime: body.prepTime,

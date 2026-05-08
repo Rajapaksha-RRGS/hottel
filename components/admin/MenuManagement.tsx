@@ -16,7 +16,7 @@ type Prices = {
 type FoodItem = {
   _id: string;
   name: string;
-  category: 'Appetizer' | 'Main' | 'Dessert' | 'Beverage' | 'Cocktail' | 'Shot' | 'Grilled' | 'Fried' | 'Burgers' | 'Sandwich'| 'spaghetti ' | 'pastha' ;
+  category: 'Appetizer' | 'Main' | 'Dessert' | 'Beverage' | 'Cocktail' | 'Shot' | 'Grilled' | 'Fried' | 'Burgers' | 'Sandwich'| 'spaghetti' | 'pastha' ;
   prices: Prices;
   image: string;
   prepTime?: string;
@@ -26,7 +26,7 @@ type FoodItem = {
   description?: string;
 };
 
-const CATEGORIES = ['All', 'Appetizer' , 'Main' , 'Dessert' , 'Beverage' ,'Cocktail' , 'Shot' , 'Grilled' , 'Fried' , 'Burgers' , 'Sandwich' ,'spaghetti ','pastha'];
+const CATEGORIES = ['All', 'Appetizer' , 'Main' , 'Dessert' , 'Beverage' ,'Cocktail' , 'Shot' , 'Grilled' , 'Fried' , 'Burgers' , 'Sandwich' ,'spaghetti','pastha'];
 
 export default function MenuManagement() {
   const [items, setItems] = useState<FoodItem[]>([]);

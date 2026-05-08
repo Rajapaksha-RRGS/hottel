@@ -20,7 +20,7 @@ const FoodItemSchema = new Schema<IFoodItem>({
   name: { type: String, required: true, trim: true },
   category: { 
     type: String, 
-    enum: ['Appetizer', 'Main', 'Dessert', 'Beverage', 'Cocktail', 'Shot'], 
+    enum: ['Appetizer', 'Main', 'Dessert', 'Beverage', 'Cocktail', 'Shot','Grilled', 'Fried', 'Burgers', 'Sandwich','spaghetti','pastha'], 
     required: true 
   },
   prices: {
