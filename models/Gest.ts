@@ -34,7 +34,7 @@ const GetSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please provide a password'],
+        required: [false, 'Please provide a password'],
         select: false, // Don't return password by default in queries
     },
     image: {
