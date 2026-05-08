@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSearch } from "@/context/SearchContext";
 import { motion } from "framer-motion";
 import FilterBar from "@/components/components/FilterBar";
 import RoomCard from "@/components/components/RoomCard";
-import QuickViewDrawer from "@/components/components/QuickViewDrawer";
+import QuickViewModal from "@/components/components/QuickViewModal";
 import Navigation from "@/components/components/Herder";
 import Footer from "@/components/components/Footer";
+import { X } from "lucide-react";
 
 interface Room {
   id: string;
@@ -25,12 +26,13 @@ interface Room {
   maxGuests: number;
 }
 
-export default function RoomPage() {
+function RoomPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const checkIn = searchParams.get("checkIn") || "";
-  const checkOut = searchParams.get("checkOut") || "";
+  const urlCheckIn = searchParams.get("checkIn") || "";
+  const urlCheckOut = searchParams.get("checkOut") || "";
   const { searchData } = useSearch();
+
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [filters, setFilters] = useState<{
     category: string | null;
@@ -43,6 +45,8 @@ export default function RoomPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeCheckIn, setActiveCheckIn] = useState("");
+  const [activeCheckOut, setActiveCheckOut] = useState("");
 
   const mapRoom = (room: any): Room => {
     const fallbackImage =
@@ -71,6 +75,16 @@ export default function RoomPage() {
     };
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   useEffect(() => {
     const fetchRooms = async () => {
       setLoading(true);
@@ -78,15 +92,26 @@ export default function RoomPage() {
 
       try {
         let endpoint = "/api/rooms";
+        let checkInDate = "";
+        let checkOutDate = "";
 
-        if (searchData && searchData.checkIn && searchData.checkOut) {
-          console.log("🔍 Using search context data:", searchData);
-
+        // Prioritize URL parameters, fall back to searchData
+        if (urlCheckIn && urlCheckOut) {
+          checkInDate = urlCheckIn;
+          checkOutDate = urlCheckOut;
+          endpoint = `/api/rooms/available?checkIn=${urlCheckIn}&checkOut=${urlCheckOut}`;
+          setActiveCheckIn(urlCheckIn);
+          setActiveCheckOut(urlCheckOut);
+        } else if (searchData && searchData.checkIn && searchData.checkOut) {
+          checkInDate = searchData.checkIn;
+          checkOutDate = searchData.checkOut;
           endpoint = `/api/rooms/available?checkIn=${searchData.checkIn}&checkOut=${searchData.checkOut}`;
+          setActiveCheckIn(searchData.checkIn);
+          setActiveCheckOut(searchData.checkOut);
         } else {
-          console.log("🔍 No search context data, fetching all rooms");
+          setActiveCheckIn("");
+          setActiveCheckOut("");
         }
-        //api ekata call karamu
 
         const res = await fetch(endpoint, { cache: "no-store" });
         const data = await res.json();
@@ -110,7 +135,7 @@ export default function RoomPage() {
     };
 
     fetchRooms();
-  }, [searchData]);
+  }, [searchData, urlCheckIn, urlCheckOut]);
 
   // Filter rooms based on selected filters
   const filteredRooms = useMemo(() => {
@@ -124,6 +149,14 @@ export default function RoomPage() {
 
   const handleFilterChange = (category: string | null, maxPrice: number) => {
     setFilters({ category, maxPrice });
+  };
+
+  const handleClearSearch = () => {
+    setActiveCheckIn("");
+    setActiveCheckOut("");
+    setRooms([]);
+    setFilters({ category: null, maxPrice: 1000 });
+    router.push("/rooms");
   };
 
   return (
@@ -245,6 +278,36 @@ export default function RoomPage() {
         </motion.div>
       </section>
 
+      {/* Date Filter Feedback */}
+      {activeCheckIn && activeCheckOut && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-purple-50 border-b border-purple-200 px-6 py-4"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-purple-600 rounded-full" />
+              <p className="text-gray-700 font-medium">
+                Showing available rooms for{" "}
+                <span className="text-purple-600 font-semibold">
+                  {formatDate(activeCheckIn)} — {formatDate(activeCheckOut)}
+                </span>
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleClearSearch}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <X size={16} />
+              <span className="text-sm font-medium">Clear</span>
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Filter Bar */}
       <FilterBar onFilterChange={handleFilterChange} />
 
@@ -308,11 +371,12 @@ export default function RoomPage() {
             className="text-center py-16"
           >
             <p className="text-gray-600 text-lg mb-6">
-              No rooms available for these dates. Try different dates or clear
-              filters.
+              {activeCheckIn && activeCheckOut
+                ? "No rooms available for these dates. Try different dates or clear filters."
+                : "No rooms available. Please select dates to search."}
             </p>
             <button
-              onClick={() => router.push("/rooms")}
+              onClick={handleClearSearch}
               className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition"
             >
               Clear Filters
@@ -359,12 +423,22 @@ export default function RoomPage() {
         </div>
       </section>
 
-      {/* Quick View Drawer */}
-      <QuickViewDrawer
+      {/* Quick View Modal */}
+      <QuickViewModal
         room={selectedRoom}
         onClose={() => setSelectedRoom(null)}
+        checkIn={activeCheckIn}
+        checkOut={activeCheckOut}
       />
       <Footer />
     </div>
+  );
+}
+
+export default function RoomPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading rooms...</div>}>
+      <RoomPageContent />
+    </Suspense>
   );
 }

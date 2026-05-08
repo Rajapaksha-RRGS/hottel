@@ -171,6 +171,7 @@ export default function ReceptionNewOrder() {
       const payload: any = {
         items: cart.map((c) => ({ foodItem: c.foodItem, quantity: c.quantity, subTotal: c.subTotal })),
         totalBill: total,
+        orderStatus: 'Pending',
       };
 
       if (selection?.type === 'room') {
@@ -181,20 +182,28 @@ export default function ReceptionNewOrder() {
         payload.orderType = 'Table';
       }
 
+      console.log('📦 Sending order payload:', payload);
+
       const res = await fetch('/api/reception/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const json = await res.json();
+
       if (json.success) {
+        console.log('✅ Order placed successfully:', json.data);
         setSuccessMsg('Order sent to kitchen!');
         setCart([]);
         setSelectedTable('');
         setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        console.error('❌ Order failed:', json.message);
+        alert(`Error: ${json.message}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error('❌ Error placing order:', err);
+      alert('Failed to place order. Please try again.');
     }
     setPlacing(false);
   };

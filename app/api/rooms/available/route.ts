@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongoose";
-// පරෙස්සම් වන්න: ෆයිල් එකේ නම නිවැරදිව දෙන්න (උදා: @/models/RoomBooking)
-import Booking from "@/models/RoomBokking"; 
+import Booking from "@/models/RoomBokking";
 import Room from "@/models/Room";
 
 export async function GET(request: Request) {
@@ -14,20 +13,23 @@ export async function GET(request: Request) {
     const checkOut = searchParams.get("checkOut");
 
     if (!checkIn || !checkOut) {
-      return NextResponse.json({ message: "Dates required" }, { status: 400 });
+      return NextResponse.json({
+        ok: false,
+        message: "Dates required"
+      }, { status: 400 });
     }
 
     const start = new Date(checkIn);
     const end = new Date(checkOut);
 
-    // 1. Overlapping Bookings සොයා ගැනීම
+    // Find overlapping bookings
     const overlappingBookings = await Booking.find({
       checkInDate: { $lt: end },
       checkOutDate: { $gt: start },
-      status: { $ne: "Cancelled" } // "Confirmed" ඒවා මෙතනට අහුවෙනවා
+      status: { $ne: "Cancelled" }
     }).select("room");
 
-    // 2. වැදගත්ම කොටස: Room IDs ටික නිවැරදිව ObjectId බවට පත් කිරීම
+    // Convert Room IDs to ObjectId
     const bookedRoomIds = overlappingBookings
       .map((b) => b.room)
       .filter((id) => mongoose.Types.ObjectId.isValid(id))
@@ -35,17 +37,26 @@ export async function GET(request: Request) {
 
     console.log("🔍 Booked Room IDs found:", bookedRoomIds);
 
-    // 3. Available Rooms සෙවීම
+    // Find available rooms
     const availableRooms = await Room.find({
       _id: { $nin: bookedRoomIds },
     });
 
     console.log("✅ Available Rooms Count:", availableRooms.length);
 
-    return NextResponse.json(availableRooms, { status: 200 });
+    return NextResponse.json({
+      ok: true,
+      rooms: availableRooms,
+      count: availableRooms.length,
+      checkIn,
+      checkOut
+    }, { status: 200 });
 
   } catch (error) {
     console.error("❌ API ERROR:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({
+      ok: false,
+      message: "Internal Server Error"
+    }, { status: 500 });
   }
 }

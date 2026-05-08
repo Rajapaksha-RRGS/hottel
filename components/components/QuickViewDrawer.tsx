@@ -9,11 +9,15 @@ import BookingForm from "./BookingForm";
 interface QuickViewDrawerProps {
   room: any | null;
   onClose: () => void;
+  checkIn?: string;
+  checkOut?: string;
 }
 
 export default function QuickViewDrawer({
   room,
   onClose,
+  checkIn,
+  checkOut,
 }: QuickViewDrawerProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -160,7 +164,7 @@ export default function QuickViewDrawer({
               </div>
 
               {/* Booking Form */}
-              <BookingForm room={room} onSuccess={onClose} onClose={onClose} />
+              <BookingForm room={room} onSuccess={onClose} onClose={onClose} defaultCheckIn={checkIn} defaultCheckOut={checkOut} />
             </div>
           </motion.div>
         </>
