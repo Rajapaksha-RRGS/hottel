@@ -48,7 +48,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     const end = new Date(checkOutDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const pricePerNight = room.pricePerNight || 0;
+    const pricePerNight = room.pricePerNight || (room as any).price || 0;
     return diffDays * pricePerNight;
   };
 
@@ -69,7 +69,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     setAvailabilityMessage('Checking availability...');
 
     try {
-      const roomId = room._id?.toString() || room.roomNumber;
+      const roomId = room._id?.toString() || (room as any).id || room.roomNumber;
 
       if (!roomId) {
         setAvailabilityStatus('error');
@@ -102,7 +102,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       setAvailabilityMessage('Error checking availability');
       console.error('Availability check error:', err);
     }
-  }, [room.roomNumber, room._id]);
+  }, [room.roomNumber, room._id, (room as any).id]);
 
   // Auto-check availability on mount when dates are pre-filled
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
       return;
     }
 
-    const maxOccupancy = room.maxOccupancy || 2;
+    const maxOccupancy = room.maxOccupancy || (room as any).maxGuests || 2;
     if (guests < 1 || guests > maxOccupancy) {
       setError(`Guests must be between 1 and ${maxOccupancy}`);
       return;
@@ -165,9 +165,9 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
     }
 
     // Map room properties
-    const roomId = room._id?.toString() || room.roomNumber;
-    const roomName = `${room.type} – Room ${room.roomNumber}`;
-    const roomPrice = room.pricePerNight;
+    const roomId = room._id?.toString() || (room as any).id || room.roomNumber;
+    const roomName = room.roomNumber ? `${room.type} – Room ${room.roomNumber}` : (room as any).name || 'Room';
+    const roomPrice = room.pricePerNight || (room as any).price;
 
     // Validate required room data
     if (!roomId) {
@@ -342,7 +342,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
           onChange={(e) => setGuests(Number(e.target.value))}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-slate-900 bg-white"
         >
-          {Array.from({ length: room.maxOccupancy || 2 }, (_, i) => i + 1).map((num) => (
+          {Array.from({ length: room.maxOccupancy || (room as any).maxGuests || 2 }, (_, i) => i + 1).map((num) => (
             <option key={num} value={num}>
               {num} {num === 1 ? 'Guest' : 'Guests'}
             </option>
@@ -359,7 +359,7 @@ export default function BookingForm({ room, onSuccess, defaultCheckIn, defaultCh
         >
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Price per night:</span>
-            <span className="font-semibold text-gray-900">${room.pricePerNight}</span>
+            <span className="font-semibold text-gray-900">${room.pricePerNight || (room as any).price}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Number of nights:</span>
