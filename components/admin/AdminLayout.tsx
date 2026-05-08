@@ -17,6 +17,7 @@ import {
   LogOut,
   Settings,
   UserCheck,
+  Utensils,
 } from 'lucide-react';
 
 import DashboardOverview from '@/components/admin/DashboardOverview';
@@ -28,6 +29,7 @@ import PaymentsInvoices from '@/components/admin/PaymentsInvoices';
 import Analytics from '@/components/admin/Analytics';
 import Notifications from '@/components/admin/Notifications';
 import StaffManagement from '@/components/admin/StaffManagement';
+import MenuManagement from '@/components/admin/MenuManagement';
 
 type MenuItem = {
   id: string;
@@ -42,6 +44,7 @@ const menuItems: MenuItem[] = [
   { id: 'staff', label: 'Staff Management', icon: UserCheck },
   { id: 'guests', label: 'Guest List', icon: Users },
   { id: 'calendar', label: 'Booking Calendar', icon: CalendarDays },
+  { id: 'menu', label: 'Menu Management', icon: Utensils },
   { id: 'payments', label: 'Payment & Invoice', icon: CreditCard },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -54,13 +57,18 @@ const menuTitles: Record<string, string> = {
   tours: 'Tour Management',
   guests: 'Guest Directory',
   calendar: 'Booking Calendar',
+  menu: 'Menu Management',
   payments: 'Payments & Invoices',
   analytics: 'Analytics',
   notifications: 'Notifications',
 };
 
-export default function AdminLayout() {
-  const [activeMenu, setActiveMenu] = useState('dashboard');
+interface AdminLayoutProps {
+  initialMenu?: string;
+}
+
+export default function AdminLayout({ initialMenu = 'dashboard' }: AdminLayoutProps) {
+  const [activeMenu, setActiveMenu] = useState(initialMenu);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const router = useRouter();
 
@@ -85,6 +93,8 @@ export default function AdminLayout() {
         return <GuestList />;
       case 'calendar':
         return <BookingCalendar />;
+      case 'menu':
+        return <MenuManagement />;
       case 'payments':
         return <PaymentsInvoices />;
       case 'analytics':
