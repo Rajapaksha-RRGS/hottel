@@ -10,12 +10,18 @@ export async function POST(req: NextRequest) {
 
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Please login" },
+        { status: 401 }
+      );
     }
 
     const userRole = (session.user as any)?.role;
     if (userRole !== "Admin" && userRole !== "Receptionist" && userRole !== "Manager") {
-      return NextResponse.json({ error: "Unauthorized: Reception access required" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Reception access required" },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
@@ -120,8 +126,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to place order",
-        error: error instanceof Error ? error.message : "Unknown error"
+        message: "Failed to place order: " + (error instanceof Error ? error.message : "Unknown error")
       },
       { status: 500 }
     );

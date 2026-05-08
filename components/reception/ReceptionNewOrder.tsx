@@ -4,40 +4,17 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Minus, Plus, ShoppingCart, Send, X, Utensils,
-  Coffee, Wine, IceCream, Salad, Martini, Zap,
+  Coffee, Wine, IceCream, Salad, Martini, Zap, Loader,
 } from 'lucide-react';
 
-// ─── Mock Food Menu Data ───
-const MOCK_MENU = [
-  // Appetizer
-  { _id: 'a1', name: 'Fish and chips', category: 'Appetizer', price: 7.50, isAvailable: true },
-  { _id: 'a2', name: 'Spring rolls', category: 'Appetizer', price: 5.25, isAvailable: true },
-  { _id: 'a3', name: 'Garlic prawns', category: 'Appetizer', price: 9.80, isAvailable: true },
-  { _id: 'a4', name: 'Chicken wings', category: 'Appetizer', price: 8.50, isAvailable: true },
-  // Main
-  { _id: 'm1', name: 'Roast chicken', category: 'Main', price: 12.75, isAvailable: true },
-  { _id: 'm2', name: 'Fillet steak', category: 'Main', price: 11.60, isAvailable: true },
-  { _id: 'm3', name: 'Beefsteak', category: 'Main', price: 10.20, isAvailable: true },
-  { _id: 'm4', name: 'Roast beef', category: 'Main', price: 10.50, isAvailable: true },
-  { _id: 'm5', name: 'Lobster', category: 'Main', price: 13.40, isAvailable: true },
-  { _id: 'm6', name: 'Grilled salmon', category: 'Main', price: 14.90, isAvailable: true },
-  // Dessert
-  { _id: 'd1', name: 'Chocolate cake', category: 'Dessert', price: 6.50, isAvailable: true },
-  { _id: 'd2', name: 'Ice cream sundae', category: 'Dessert', price: 5.00, isAvailable: true },
-  { _id: 'd3', name: 'Crème brûlée', category: 'Dessert', price: 7.20, isAvailable: true },
-  // Beverage
-  { _id: 'b1', name: 'Fresh juice', category: 'Beverage', price: 3.50, isAvailable: true },
-  { _id: 'b2', name: 'Coffee latte', category: 'Beverage', price: 4.00, isAvailable: true },
-  { _id: 'b3', name: 'Iced tea', category: 'Beverage', price: 3.00, isAvailable: true },
-  { _id: 'b4', name: 'Mineral water', category: 'Beverage', price: 2.00, isAvailable: true },
-  // Cocktail
-  { _id: 'c1', name: 'Mojito', category: 'Cocktail', price: 8.85, isAvailable: true },
-  { _id: 'c2', name: 'Piña colada', category: 'Cocktail', price: 9.50, isAvailable: true },
-  { _id: 'c3', name: 'Margarita', category: 'Cocktail', price: 9.00, isAvailable: true },
-  // Shot
-  { _id: 's1', name: 'Red caviar', category: 'Shot', price: 12.30, isAvailable: true },
-  { _id: 's2', name: 'Tequila shot', category: 'Shot', price: 6.00, isAvailable: true },
-];
+interface MenuItem {
+  _id: string;
+  name: string;
+  category: string;
+  prices: { normal: number; full?: number };
+  image?: string;
+  isAvailable: boolean;
+}
 
 type CartItem = {
   foodItem: string;
@@ -59,6 +36,8 @@ const CATEGORIES = [
 ];
 
 export default function ReceptionNewOrder() {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loadingMenu, setLoadingMenu] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Appetizer');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -66,6 +45,24 @@ export default function ReceptionNewOrder() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [placing, setPlacing] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Fetch menu items from MongoDB
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingMenu(true);
+        const res = await fetch('/api/admin/menu');
+        const items = await res.json();
+        setMenuItems(Array.isArray(items) ? items : []);
+        console.log('✅ Menu items loaded:', items.length);
+      } catch (err) {
+        console.error('Error fetching menu:', err);
+        setMenuItems([]);
+      } finally {
+        setLoadingMenu(false);
+      }
+    })();
+  }, []);
 
   // Fetch checked-in bookings for table/room selection
   useEffect(() => {
@@ -90,7 +87,7 @@ export default function ReceptionNewOrder() {
   }, []);
 
   // Filter menu items
-  const filteredItems = MOCK_MENU.filter((item) => {
+  const filteredItems = menuItems.filter((item) => {
     const matchCategory = item.category === activeCategory;
     const matchSearch = searchQuery
       ? item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,17 +96,18 @@ export default function ReceptionNewOrder() {
   });
 
   // Cart helpers
-  const addToCart = (item: typeof MOCK_MENU[0]) => {
+  const addToCart = (item: MenuItem) => {
+    const price = item.prices.normal;
     setCart((prev) => {
       const existing = prev.find((c) => c.foodItem === item._id);
       if (existing) {
         return prev.map((c) =>
           c.foodItem === item._id
-            ? { ...c, quantity: c.quantity + 1, subTotal: (c.quantity + 1) * c.price }
+            ? { ...c, quantity: c.quantity + 1, subTotal: (c.quantity + 1) * price }
             : c
         );
       }
-      return [...prev, { foodItem: item._id, name: item.name, price: item.price, quantity: 1, subTotal: item.price }];
+      return [...prev, { foodItem: item._id, name: item.name, price, quantity: 1, subTotal: price }];
     });
   };
 
@@ -191,15 +189,26 @@ export default function ReceptionNewOrder() {
       });
       const json = await res.json();
 
-      if (json.success) {
+      if (!res.ok) {
+        const errorMsg = json.message || json.error || 'Failed to place order';
+        console.error('❌ Order failed (HTTP ' + res.status + '):', errorMsg);
+        if (res.status === 401) {
+          alert('Session expired. Please refresh and login again.');
+        } else if (res.status === 403) {
+          alert('You do not have permission to place orders.');
+        } else {
+          alert(`Error: ${errorMsg}`);
+        }
+      } else if (json.success) {
         console.log('✅ Order placed successfully:', json.data);
         setSuccessMsg('Order sent to kitchen!');
         setCart([]);
         setSelectedTable('');
         setTimeout(() => setSuccessMsg(''), 3000);
       } else {
-        console.error('❌ Order failed:', json.message);
-        alert(`Error: ${json.message}`);
+        const errorMsg = json.message || 'Failed to place order';
+        console.error('❌ Order failed:', errorMsg);
+        alert(`Error: ${errorMsg}`);
       }
     } catch (err) {
       console.error('❌ Error placing order:', err);
@@ -232,7 +241,7 @@ export default function ReceptionNewOrder() {
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
             const isActive = activeCategory === cat.id;
-            const count = MOCK_MENU.filter((i) => i.category === cat.id).length;
+            const count = menuItems.filter((i) => i.category === cat.id && i.isAvailable).length;
             return (
               <button
                 key={cat.id}
@@ -257,51 +266,67 @@ export default function ReceptionNewOrder() {
 
         {/* Food Items Grid */}
         <div className="flex-1 overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredItems.map((item, idx) => {
-              const qty = getQty(item._id);
-              return (
-                <motion.div
-                  key={item._id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03 }}
-                  className="group relative bg-luxury-card rounded-lg p-4 overflow-hidden transition-all duration-300 hover:shadow-lg border border-slate-700"
-                  style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
-                >
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-emerald-500/[0.05] to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {loadingMenu ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <Loader className="w-8 h-8 animate-spin text-emerald-400 mx-auto mb-3" />
+                <p className="text-slate-400 text-sm">Loading menu items...</p>
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <Utensils className="w-8 h-8 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400 text-sm">No items available in this category</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredItems.map((item, idx) => {
+                const qty = getQty(item._id);
+                return (
+                  <motion.div
+                    key={item._id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="group relative bg-luxury-card rounded-lg p-4 overflow-hidden transition-all duration-300 hover:shadow-lg border border-slate-700"
+                    style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
+                  >
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-emerald-500/[0.05] to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                  {/* "ORDER → KITCHEN" label */}
-                  <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mb-3">Order → Kitchen</p>
+                    {/* "ORDER → KITCHEN" label */}
+                    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mb-3">Order → Kitchen</p>
 
-                  <h4 className="text-white font-semibold text-sm mb-1">{item.name}</h4>
-                  <p className="text-emerald-400 font-bold text-base mb-4">${item.price.toFixed(2)}</p>
+                    <h4 className="text-white font-semibold text-sm mb-1">{item.name}</h4>
+                    <p className="text-emerald-400 font-bold text-base mb-4">${item.prices.normal.toFixed(2)}</p>
 
-                  {/* Quantity Controls */}
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => removeFromCart(item._id)}
-                      disabled={qty === 0}
-                      className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 border border-slate-700"
-                      style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <span className={`text-sm font-bold min-w-[24px] text-center ${qty > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
-                      {qty}
-                    </span>
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white hover:bg-emerald-700 transition-all duration-200"
-                      style={{ boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)' }}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                    {/* Quantity Controls */}
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => removeFromCart(item._id)}
+                        disabled={qty === 0}
+                        className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 border border-slate-700"
+                        style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className={`text-sm font-bold min-w-[24px] text-center ${qty > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {qty}
+                      </span>
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white hover:bg-emerald-700 transition-all duration-200"
+                        style={{ boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)' }}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
