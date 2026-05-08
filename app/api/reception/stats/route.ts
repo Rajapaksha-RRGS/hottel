@@ -88,7 +88,7 @@ export async function GET() {
       FoodOrder.find({ orderStatus: "Pending" })
         .populate({
           path: "items.foodItem",
-          select: "name price category",
+          select: "name price category prepTime",
         })
         .populate({
           path: "roomBookingId",
