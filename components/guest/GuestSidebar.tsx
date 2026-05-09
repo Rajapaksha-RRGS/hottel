@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Utensils,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,11 @@ const menuItems = [
     name: 'Bookings',
     href: '/guest/dashboard/bookings',
     icon: Calendar,
+  },
+  {
+    name: 'Dining',
+    href: '/guest/dashboard/dining',
+    icon: Utensils,
   },
   {
     name: 'Payments',

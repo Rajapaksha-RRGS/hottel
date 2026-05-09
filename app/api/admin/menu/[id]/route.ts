@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import FoodItem from '@/models/FoodItem';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
     const body = await req.json();
-    const updatedItem = await FoodItem.findByIdAndUpdate(params.id, body, { new: true });
+    const { id } = await params;
+    const updatedItem = await FoodItem.findByIdAndUpdate(id, body, { new: true });
     
     if (!updatedItem) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
@@ -19,10 +20,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    const deletedItem = await FoodItem.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const deletedItem = await FoodItem.findByIdAndDelete(id);
     
     if (!deletedItem) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
