@@ -1,0 +1,190 @@
+@startuml Hotel_ERD_Final
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #2C3E50
+skinparamArrowColor #34495E
+
+title ER Diagram - Hotel Management System
+
+class User {
+    * _id : ObjectId
+    - name : String
+    - email : String
+    - password : String
+    - role : String
+    - image : String
+    - isActive : Boolean
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Room {
+    * _id : ObjectId
+    - roomNumber : String
+    - type : String
+    - status : String
+    - pricePerNight : Number
+    - amenities : String[]
+    - maxOccupancy : Number
+    - description : String
+    - images : String[]
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class RoomBooking {
+    * _id : ObjectId
+    - guestName : String
+    - guestEmail : String
+    - guestPhone : String
+    - room : ObjectId
+    - checkInDate : Date
+    - checkOutDate : Date
+    - numberOfGuests : Number
+    - totalAmount : Number
+    - advancePayment : Number
+    - paymentStatus : String
+    - status : String
+    - specialRequests : String
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Gest {
+    * _id : ObjectId
+    - name : String
+    - email : String
+    - phone : String
+    - message : String
+    - password : String
+    - image : String
+    - isActive : Boolean
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class FoodItem {
+    * _id : ObjectId
+    - name : String
+    - category : String
+    - prices : Object
+    - image : String
+    - prepTime : String
+    - allergens : String[]
+    - spiceLevel : Number
+    - isAvailable : Boolean
+    + description : String
+}
+
+class FoodOrder {
+    * _id : ObjectId
+    - roomBookingId : ObjectId
+    - tableNumber : String
+    - orderType : String
+    - items : Array
+    - totalBill : Number
+    - orderStatus : String
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class TourPackage {
+    * _id : ObjectId
+    - name : String
+    - description : String
+    - location : String
+    - duration : String
+    - capacity : Number
+    - booked : Number
+    - rating : Number
+    - price : Number
+    - status : String
+    - image : String
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class TourBooking {
+    * _id : ObjectId
+    - roomBookingId : ObjectId
+    - tourPackageId : ObjectId
+    - numberOfPeople : Number
+    - bookingDate : Date
+    - totalCost : Number
+    - status : String
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Invoice {
+    * _id : ObjectId
+    - invoiceNumber : String
+    - roomBookingId : ObjectId
+    - tableNumber : String
+    - invoiceType : String
+    - roomCharges : Number
+    - foodCharges : Number
+    - tourCharges : Number
+    - serviceCharge : Number
+    - tax : Number
+    - grandTotal : Number
+    - isPaid : Boolean
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Complaint {
+    * _id : ObjectId
+    - guestEmail : String
+    - guestName : String
+    - category : String
+    - priority : String
+    - subject : String
+    - description : String
+    - status : String
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Feedback {
+    * _id : ObjectId
+    - guestEmail : String
+    - guestName : String
+    - category : String
+    - rating : Number
+    - message : String
+    - bookingId : ObjectId
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+class Product {
+    * _id : ObjectId
+    - productId : String
+    - productName : String
+    - altName : String[]
+    - description : String
+    - img : String[]
+    - labelPrice : Number
+    - price : Number
+    - stock : Number
+    - isAvailable : Boolean
+    + createdAt : Date
+    + updatedAt : Date
+}
+
+' Relationships
+User --> RoomBooking : manages
+User --> FoodOrder : processes
+Room ||--o{ RoomBooking : has
+RoomBooking ||--o{ FoodOrder : places
+RoomBooking ||--o{ TourBooking : books
+RoomBooking ||--o| Invoice : generates
+RoomBooking ||--o{ Feedback : receives
+FoodItem }|--|{ FoodOrder : included in
+TourPackage ||--o{ TourBooking : booked by
+Gest ..> RoomBooking : makes
+Gest ..> Complaint : submits
+Gest ..> Feedback : gives
+
+@enduml

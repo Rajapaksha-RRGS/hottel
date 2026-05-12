@@ -1,0 +1,58 @@
+@startuml Context_Diagram
+title System Context Diagram - Hotel Management System
+
+skinparam backgroundColor #FFFFFF
+skinparam rectangle {
+    BackgroundColor #4A90D9
+    BorderColor #2C3E50
+    FontColor #FFFFFF
+    Padding 10
+}
+
+' Central System
+rectangle "<b>HOTEL MANAGEMENT SYSTEM</b>\n(Next.js + MongoDB)" as System {
+    note right of System
+        <b>Core Capabilities:</b>
+        - Room Booking Management
+        - Food & Order Processing
+        - Tour Package Bookings
+        - Invoice & Payment
+        - Guest Feedback System
+        - Staff Administration
+    end note
+}
+
+' External Entities
+participant "<b>Guest</b>\n(Customers)" as Guest
+participant "<b>Admin</b>\n(System Manager)" as Admin
+participant "<b>Receptionist</b>\n(Front Desk)" as Receptionist
+participant "<b>Waiter</b>\n(Staff)" as Waiter
+participant "<b>Payment Gateway</b>\n(External Service)" as Payment
+
+' Relationships
+Guest -> System : Browse Rooms & Tours
+Guest -> System : Make Bookings
+Guest -> System : Submit Feedback/Complaints
+Guest -> System : View Orders
+
+Admin -> System : User Management
+Admin -> System : System Configuration
+Admin -> System : View Analytics
+
+Receptionist -> System : Check-in/Check-out
+Receptionist -> System : Manage Reservations
+Receptionist -> System : Process Orders
+
+Waiter -> System : Add Food Orders
+Waiter -> System : Update Order Status
+
+Payment -> System : Process Payments (webhook)
+System -> Payment : Charge Cards
+
+' Lines for clarity
+Guest ..> System : demands
+Admin ..> System : manages
+Receptionist ..> System : operates
+Waiter ..> System : uses
+
+@enduml

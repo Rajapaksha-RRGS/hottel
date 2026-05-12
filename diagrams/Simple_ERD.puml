@@ -1,0 +1,32 @@
+@startuml Simple_ERD
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+}
+
+entity User
+entity Room
+entity RoomBooking
+entity Guest
+entity FoodItem
+entity FoodOrder
+entity TourPackage
+entity TourBooking
+entity Invoice
+entity Complaint
+entity Feedback
+entity Product
+
+User "1" -- "0..*" RoomBooking : manages
+Room "1" -- "0..*" RoomBooking : has
+RoomBooking "1" -- "0..*" FoodOrder : places
+RoomBooking "1" -- "0..*" TourBooking : books
+RoomBooking "1" -- "0..1" Invoice : generates
+RoomBooking "1" -- "0..*" Feedback : receives
+FoodItem "0..*" -- "0..*" FoodOrder : in order
+TourPackage "1" -- "0..*" TourBooking : books
+Guest "1" .. "0..*" RoomBooking : makes
+Guest "1" .. "0..*" Complaint : submits
+Guest "1" .. "0..*" Feedback : gives
+
+@enduml

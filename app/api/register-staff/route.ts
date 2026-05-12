@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
 import { UserRole } from "@/lib/type";
-import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,13 +75,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password with bcrypt
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password: hashedPassword,
+      password: password,
       role: role as UserRole,
       image: image || "",
       isActive: true,

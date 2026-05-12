@@ -1,0 +1,124 @@
+/* ============================================================
+   HOTEL MANAGEMENT SYSTEM - ENUMS REFERENCE
+   ============================================================ */
+
+' ═══════════════════════════════════════════════════════════
+' CORE ENUMS
+' ═══════════════════════════════════════════════════════════
+
+entity UserRole {
+    Admin
+    Receptionist
+    Waiter
+    Manager
+}
+
+entity RoomStatus {
+    Available
+    Occupied
+    Cleaning
+    Maintenance
+}
+
+entity RoomType {
+    Standard
+    Deluxe
+    BeachCabana
+    FamilySuite
+}
+
+entity BookingStatus {
+    Confirmed
+    CheckedIn
+    CheckedOut
+    Cancelled
+}
+
+entity PaymentStatus {
+    Pending
+    PartiallyPaid
+    Paid
+}
+
+entity OrderStatus {
+    Pending
+    Served
+    Billed
+}
+
+entity OrderType {
+    Room
+    Table
+}
+
+entity FoodCategory {
+    Appetizer
+    Main
+    Dessert
+    Beverage
+    Cocktail
+    Shot
+    Grilled
+    Fried
+    Burgers
+    Sandwich
+    Spaghetti
+    Pastha
+}
+
+entity TourStatus {
+    Active
+    Full
+    Inactive
+}
+
+entity TourBookingStatus {
+    Scheduled
+    Completed
+    Cancelled
+}
+
+entity InvoiceType {
+    Room
+    Table
+}
+
+entity ComplaintCategory {
+    Room
+    Service
+    Food
+    Cleanliness
+    Noise
+    Other
+}
+
+entity ComplaintPriority {
+    Low
+    Medium
+    High
+}
+
+entity ComplaintStatus {
+    Open
+    InProgress
+    Resolved
+}
+
+entity FeedbackCategory {
+    Room
+    Service
+    Food
+    Overall
+}
+
+' Diagram styling
+skinparam backgroundColor #FAFAFA
+skinparam entity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    FontColor #2C3E50
+}
+
+title Enums - Hotel Management System
+
+@enduml

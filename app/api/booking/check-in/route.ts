@@ -5,7 +5,7 @@ import RoomBooking from "@/models/RoomBokking";
 export async function PUT(request: Request) {
   try {
     await connectDB();
-    const { bookingId } = await request.json();
+    const { bookingId, nicNumber, passportNumber } = await request.json();
 
     if (!bookingId) {
       return NextResponse.json({
@@ -14,9 +14,20 @@ export async function PUT(request: Request) {
       }, { status: 400 });
     }
 
+    if (!nicNumber && !passportNumber) {
+      return NextResponse.json({
+        success: false,
+        message: "NIC number or Passport number is required for check-in"
+      }, { status: 400 });
+    }
+
     const updatedBooking = await RoomBooking.findByIdAndUpdate(
       bookingId,
-      { status: 'Checked-In' },
+      {
+        status: 'Checked-In',
+        ...(nicNumber && { nicNumber }),
+        ...(passportNumber && { passportNumber }),
+      },
       { new: true }
     ).populate('room');
 

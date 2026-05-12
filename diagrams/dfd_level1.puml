@@ -1,0 +1,157 @@
+@startuml DFD_Level_1
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 80
+
+' ─────────────────────────────────────────────────────────
+'  EXTERNAL ENTITIES  (square rectangles, no rounding)
+' ─────────────────────────────────────────────────────────
+skinparam rectangle {
+    BackgroundColor #EBF0FA
+    BorderColor     #4A6FA5
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+    RoundCorner     0
+}
+
+' ─────────────────────────────────────────────────────────
+'  PROCESSES  (rounded cards)
+' ─────────────────────────────────────────────────────────
+skinparam card {
+    BackgroundColor #FFFFFF
+    BorderColor     #2C5F9E
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+    RoundCorner     18
+}
+
+' ─────────────────────────────────────────────────────────
+'  DATA STORES  (database / open rectangle feel)
+' ─────────────────────────────────────────────────────────
+skinparam collections {
+    BackgroundColor #F5F5F5
+    BorderColor     #6C757D
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+}
+
+skinparam arrow {
+    Color     #444444
+    FontSize  9
+    FontColor #333333
+    Thickness 1.2
+}
+
+title Figure 3.2 — Data Flow Diagram Level 1\nHotel & Tour Management System
+
+' ══════════════════════════════════════════════════════════
+'  EXTERNAL ENTITIES  (top row)
+' ══════════════════════════════════════════════════════════
+rectangle "Guest" as Guest
+rectangle "Receptionist" as Receptionist
+rectangle "Waiter /\nKitchen Staff" as Waiter
+rectangle "Admin" as Admin
+
+' ══════════════════════════════════════════════════════════
+'  PROCESSES  (middle row)
+' ══════════════════════════════════════════════════════════
+card "**1.0**\nHandle\nRoom Booking" as P1
+card "**2.0**\nProcess\nCheck-In &\nCheck-Out" as P2
+card "**3.0**\nManage Food\n& Beverage\nOrders (POS)" as P3
+card "**4.0**\nProcess Billing\n& Invoicing" as P4
+card "**5.0**\nManage Tour\nPackages &\nBookings" as P5
+card "**6.0**\nMaintain System\nAdministration" as P6
+
+' ══════════════════════════════════════════════════════════
+'  DATA STORES  (bottom row — open rectangle style)
+' ══════════════════════════════════════════════════════════
+collections "D1  Room Records" as D1
+collections "D2  Booking Records" as D2
+collections "D3  Guest Records" as D3
+collections "D4  Food Order Records" as D4
+collections "D5  Invoice / Billing Records" as D5
+collections "D6  Tour Records" as D6
+collections "D7  Staff / User Records" as D7
+
+' ══════════════════════════════════════════════════════════
+'  DATA FLOWS — Guest ↔ Processes
+' ══════════════════════════════════════════════════════════
+Guest        --> P1 : Booking Request\n(name, dates, room type,\nguests, email)
+P1           --> Guest : Booking Confirmation\n(ref ID + email sent)
+
+Guest        --> P2 : Check-In Details\n(NIC / Passport)
+P2           --> Guest : Room Assignment
+
+Guest        --> P5 : Tour Inquiry\n(package, dates)
+P5           --> Guest : Tour Confirmation
+
+Guest        --> P4 : Bill Request
+P4           --> Guest : Invoice / Receipt\n(room + food + tour)
+
+' ══════════════════════════════════════════════════════════
+'  DATA FLOWS — Receptionist ↔ Processes
+' ══════════════════════════════════════════════════════════
+Receptionist --> P1 : New Booking Form\n(walk-in / phone)
+Receptionist --> P2 : Check-In / Check-Out\nRequest (bookingId)
+Receptionist --> P4 : Generate Invoice\n(guestId, payment status)
+Receptionist --> P5 : Tour Booking\nfor Guest
+
+P2           --> Receptionist : Updated Booking\nStatus & Room Info
+P4           --> Receptionist : Grand Total\n(room + food + tours)
+
+' ══════════════════════════════════════════════════════════
+'  DATA FLOWS — Waiter ↔ Processes
+' ══════════════════════════════════════════════════════════
+Waiter       --> P3 : Food Order\n(items, qty, room/table)
+P3           --> Waiter : Order Status\n(Pending → Served → Billed)
+P3           --> P4 : Food Charges\n(totalBill per order)
+
+' ══════════════════════════════════════════════════════════
+'  DATA FLOWS — Admin ↔ Processes
+' ══════════════════════════════════════════════════════════
+Admin        --> P6 : Staff Registration\n& Role Assignment
+Admin        --> P5 : Tour Package\nConfiguration
+Admin        --> P6 : Room & Menu\nConfiguration
+
+P6           --> Admin : Operational Reports\n& System Statistics
+
+' ══════════════════════════════════════════════════════════
+'  DATA FLOWS — Processes ↔ Data Stores
+' ══════════════════════════════════════════════════════════
+
+' P1 ↔ D1, D2
+D1           --> P1 : Available Rooms\n(type, price, status)
+P1           --> D2 : Reservation Data\n(new booking record)
+D2           --> P1 : Existing Bookings\n(availability check)
+
+' P2 ↔ D2, D3
+D2           --> P2 : Booking Details\n(check-in status, room)
+P2           --> D2 : Updated Booking Status\n(Checked-In / Checked-Out)
+P2           --> D3 : Guest ID Data\n(NIC / Passport stored)
+D3           --> P4 : Guest Info\n(name, booking ref)
+
+' P3 ↔ D4
+P3           --> D4 : Order Data\n(items, qty, subtotal, status)
+D4           --> P3 : Active Orders\n(Pending / Served)
+
+' P4 ↔ D2, D4, D5, D6
+D2           --> P4 : Room Charges\n(totalAmount, paymentStatus)
+D4           --> P4 : Food Charges\n(served orders total)
+D6           --> P4 : Tour Charges\n(completed tour costs)
+P4           --> D5 : Invoice Record\n(grand total, payment status)
+P4           --> D2 : Updated Payment\nStatus (Paid / Pending)
+
+' P5 ↔ D6
+P5           --> D6 : Tour Booking Data\n(package, capacity, cost)
+D6           --> P5 : Tour Availability\n(capacity, booked count)
+
+' P6 ↔ D1, D7
+P6           --> D7 : Staff / User Data\n(role, credentials)
+D7           --> P6 : Staff Records\n(roles, active status)
+P6           --> D1 : Room Configuration\n(type, price, amenities)
+
+@enduml

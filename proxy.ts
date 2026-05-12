@@ -1,62 +1,59 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
 export async function proxy(request: NextRequest) {
-  // 1. Header එකෙන් Token එක ලබා ගැනීම
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.split(' ')[1]; // "Bearer TOKEN_HERE" -> "TOKEN_HERE"
+  const pathname = request.nextUrl.pathname;
 
-  // 2. පොදු Path (Public Routes) සඳහා Middleware එක අවශ්‍ය නැතිනම්:
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+  // Allow all API auth requests unfiltered
+  if (pathname.startsWith('/api/auth')) {
     return NextResponse.next();
   }
-  if (request.nextUrl.pathname.startsWith("/api/staff")) {
+
+  // Allow public routes
+  if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname === '/') {
     return NextResponse.next();
   }
-  if (request.nextUrl.pathname.startsWith("/api/admin")) {
+
+  // Allow static files and next internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/_health') ||
+    pathname.endsWith('.ico') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.svg')
+  ) {
     return NextResponse.next();
   }
-   if (request.nextUrl.pathname.startsWith("/api/rooms")) {
-    return NextResponse.next();
-  }
-  if (!token) {
-    // 3. Token එකක් නැතිනම් Error එකක් යැවීම
+
+  // Read NextAuth session from cookie
+  const sessionCookie = request.cookies.get('next-auth.session-token')?.value;
+
+  // For protected routes, require session
+  if (!sessionCookie) {
+    if (!pathname.startsWith('/api')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    // For API routes without session, return unauthorized
     return NextResponse.json(
-      { error: "Unauthorized: No token provided" },
-      { status: 401 },
+      { error: 'Unauthorized: No session found' },
+      { status: 401 }
     );
   }
 
-  try {
-    // 4. Secret Key එක Encode කිරීම (jose සඳහා මෙය අනිවාර්යයි)
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-
-    // 5. Token එක පරීක්ෂා කිරීම (Verify)
-    const { payload } = await jwtVerify(token, secret);
-
-    // 6. User ගේ දත්ත ඊළඟ API එකට යැවීම සඳහා Headers සකස් කිරීම
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('user-id', payload.id as string);
-    requestHeaders.set('user-role', payload.role as string);
-
-    // සාර්ථක නම් ඊළඟ පියවරට (API/Page) යන්න
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
-
-  } catch (error) {
-    // Token එක වැරදි නම් හෝ කල් ඉකුත් වී නම් (Expired)
-    return NextResponse.json(
-      { error: "Invalid or expired token" },
-      { status: 403 }
-    );
-  }
+  // Allow the request through - session validation happens in NextAuth
+  return NextResponse.next();
 }
 
-// 7. මෙම Middleware එක ක්‍රියාත්මක විය යුතු Path තෝරන්න
+// Apply proxy to all routes except static files
 export const config = {
-  matcher: ["/api/staff/:path*", "/api/admin/:path*", "/api/rooms/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
