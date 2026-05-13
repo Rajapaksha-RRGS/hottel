@@ -12,8 +12,16 @@ export async function connectDB() {
     if (!uri) {
       throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
     }
-    cached.promise = mongoose.connect(uri).then((mongoose) => {
+    cached.promise = mongoose.connect(uri, {
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    }).then((mongoose) => {
+      console.log('MongoDB connected successfully');
       return mongoose;
+    }).catch((error) => {
+      console.error('MongoDB connection failed:', error.message);
+      cached.promise = null;
+      throw error;
     });
   }
 

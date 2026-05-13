@@ -5,7 +5,8 @@ import Link from 'next/link';
 
 interface TourProps {
   tour: {
-    id: number;
+    _id?: string;
+    id?: number;
     name: string;
     location: string;
     duration: string;
@@ -18,8 +19,9 @@ interface TourProps {
 }
 
 export default function TourCard({ tour }: TourProps) {
+  const tourId = tour._id || tour.id;
   return (
-    <Link href={'/tour/' + tour.id}>
+    <Link href={'/tour/' + tourId}>
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group">
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">

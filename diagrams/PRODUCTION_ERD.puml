@@ -1,0 +1,218 @@
+@startuml PRODUCTION_ERD_HotelManagement
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName Arial
+
+title Entity Relationship Diagram - Hotel Management System
+
+' ====================================================
+' CLASS DEFINITIONS
+' ====================================================
+
+class "User\n(STAFF)" as User
+User : * _id : ObjectId
+User : -name : String
+User : -email : String
+User : -password : String
+User : -role : Enum[Admin|Waiter|Receptionist|Manager]
+User : -image : String
+User : -isActive : Boolean
+User : +createdAt : Date
+User : +updatedAt : Date
+
+class "Gest\n(GUEST)" as Gest
+Gest : * _id : ObjectId
+Gest : -name : String
+Gest : -email : String
+Gest : -phone : String
+Gest : -message : String
+Gest : -password : String
+Gest : -image : String
+Gest : -isActive : Boolean
+Gest : +createdAt : Date
+Gest : +updatedAt : Date
+
+class "Room\n(INVENTORY)" as Room
+Room : * _id : ObjectId
+Room : -roomNumber : String
+Room : -type : Enum[Standard|Deluxe|BeachCabana|FamilySuite]
+Room : -status : Enum[Available|Occupied|Cleaning|Maintenance]
+Room : -pricePerNight : Number
+Room : -amenities : String[]
+Room : -maxOccupancy : Number
+Room : -description : String
+Room : -images : String[]
+Room : -lastCleaned : Date
+Room : +createdAt : Date
+Room : +updatedAt : Date
+
+class "RoomBooking\n(RESERVATIONS)" as RoomBooking
+RoomBooking : * _id : ObjectId
+RoomBooking : -guestName : String
+RoomBooking : -guestEmail : String
+RoomBooking : -guestPhone : String
+RoomBooking : -room : ObjectId
+RoomBooking : -checkInDate : Date
+RoomBooking : -checkOutDate : Date
+RoomBooking : -numberOfGuests : Number
+RoomBooking : -totalAmount : Number
+RoomBooking : -advancePayment : Number
+RoomBooking : -paymentStatus : Enum[Pending|PartiallyPaid|Paid]
+RoomBooking : -bookingStatus : Enum[Confirmed|CheckedIn|CheckedOut|Cancelled]
+RoomBooking : -specialRequests : String
+RoomBooking : -nicNumber : String
+RoomBooking : -passportNumber : String
+RoomBooking : +createdAt : Date
+RoomBooking : +updatedAt : Date
+
+class "TourBooking\n(TOUR)" as TourBooking
+TourBooking : * _id : ObjectId
+TourBooking : -roomBookingId : ObjectId
+TourBooking : -tourPackageId : ObjectId
+TourBooking : -numberOfPeople : Number
+TourBooking : -bookingDate : Date
+TourBooking : -totalCost : Number
+TourBooking : -tourStatus : Enum[Scheduled|Completed|Cancelled]
+TourBooking : +createdAt : Date
+TourBooking : +updatedAt : Date
+
+class "FoodItem\n(MENU)" as FoodItem
+FoodItem : * _id : ObjectId
+FoodItem : -name : String
+FoodItem : -category : Enum[Appetizer|Main|Dessert|Beverage|Cocktail|Grilled|Fried|Burgers]
+FoodItem : -prices_normal : Number
+FoodItem : -prices_full : Number
+FoodItem : -image : String
+FoodItem : -prepTime : String
+FoodItem : -allergens : String[]
+FoodItem : -spiceLevel : Number[0-5]
+FoodItem : -isAvailable : Boolean
+FoodItem : -description : String
+
+class "FoodOrder\n(ORDERS)" as FoodOrder
+FoodOrder : * _id : ObjectId
+FoodOrder : -roomBookingId : ObjectId
+FoodOrder : -tableNumber : String
+FoodOrder : -orderType : Enum[Room|Table]
+FoodOrder : -items : Array
+FoodOrder : -totalBill : Number
+FoodOrder : -orderStatus : Enum[Pending|Served|Billed]
+FoodOrder : +createdAt : Date
+FoodOrder : +updatedAt : Date
+
+class "TourPackage\n(TOURS)" as TourPackage
+TourPackage : * _id : ObjectId
+TourPackage : -name : String
+TourPackage : -description : String
+TourPackage : -location : String
+TourPackage : -duration : String
+TourPackage : -capacity : Number
+TourPackage : -booked : Number
+TourPackage : -rating : Number[0-5]
+TourPackage : -price : Number
+TourPackage : -packageStatus : Enum[Active|Full|Inactive]
+TourPackage : -image : String
+TourPackage : +createdAt : Date
+TourPackage : +updatedAt : Date
+
+class "Invoice\n(BILLING)" as Invoice
+Invoice : * _id : ObjectId
+Invoice : -invoiceNumber : String
+Invoice : -roomBookingId : ObjectId
+Invoice : -tableNumber : String
+Invoice : -invoiceType : Enum[Room|Table]
+Invoice : -roomCharges : Number
+Invoice : -foodCharges : Number
+Invoice : -tourCharges : Number
+Invoice : -serviceCharge : Number
+Invoice : -tax : Number
+Invoice : -grandTotal : Number
+Invoice : -isPaid : Boolean
+Invoice : +createdAt : Date
+Invoice : +updatedAt : Date
+
+class "Complaint\n(GUEST ISSUES)" as Complaint
+Complaint : * _id : ObjectId
+Complaint : -guestEmail : String
+Complaint : -guestName : String
+Complaint : -category : Enum[Room|Service|Food|Cleanliness|Noise|Other]
+Complaint : -priority : Enum[Low|Medium|High]
+Complaint : -subject : String
+Complaint : -description : String
+Complaint : -complaintStatus : Enum[Open|InProgress|Resolved]
+Complaint : +createdAt : Date
+Complaint : +updatedAt : Date
+
+class "Feedback\n(GUEST RATINGS)" as Feedback
+Feedback : * _id : ObjectId
+Feedback : -guestEmail : String
+Feedback : -guestName : String
+Feedback : -feedbackCategory : Enum[Room|Service|Food|Overall]
+Feedback : -rating : Number[1-5]
+Feedback : -message : String
+Feedback : -bookingId : ObjectId
+Feedback : +createdAt : Date
+Feedback : +updatedAt : Date
+
+class "Product\n(INVENTORY)" as Product
+Product : * _id : ObjectId
+Product : -productId : String
+Product : -productName : String
+Product : -altName : String[]
+Product : -description : String
+Product : -img : String[]
+Product : -labelPrice : Number
+Product : -price : Number
+Product : -stock : Number
+Product : -isAvailable : Boolean
+Product : +createdAt : Date
+Product : +updatedAt : Date
+
+' ====================================================
+' RELATIONSHIPS
+' ====================================================
+
+Room ||--o{ RoomBooking : "reserves"
+RoomBooking ||--o{ FoodOrder : "places"
+RoomBooking ||--o{ TourBooking : "books"
+RoomBooking ||--o| Invoice : "generates"
+RoomBooking ||--o{ Feedback : "receives"
+FoodItem }|--|{ FoodOrder : "in order"
+TourPackage ||--o{ TourBooking : "booked"
+Gest ..o| RoomBooking : "makes"
+Gest ..o| Complaint : "submits"
+Gest ..o| Feedback : "gives"
+
+' ====================================================
+' CONSTANTS / ENUMS IN NOTES
+' ====================================================
+
+note right of FoodItem
+Food Categories:
+- Appetizer, Main, Dessert
+- Beverage, Cocktail, Shot
+- Grilled, Fried, Burgers
+- Sandwich, Spaghetti, Pastha
+end note
+
+note left of User
+User Roles:
+- Admin
+- Waiter
+- Receptionist
+- Manager
+end note
+
+note bottom of Invoice
+Billing Types: Room | Table
+Payment Status: Pending | PartiallyPaid | Paid
+end note
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #3498DB
+    ArrowColor #34495E
+}
+
+@enduml

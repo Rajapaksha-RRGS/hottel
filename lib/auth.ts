@@ -12,6 +12,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code'
+        }
+      }
     }),
 
     // Credentials Provider (for staff)
@@ -21,47 +28,62 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        await connectDB();
+      async authorize(credentials, req) {
+        try {
+          await connectDB();
 
-        // Find user by email
-        const user = await User.findOne({ email: credentials?.email }).select(
-          "+password",
-        );
+          // Find user by email
+          const user = await User.findOne({ email: credentials?.email }).select(
+            "+password",
+          );
 
-        if (!user) {
-          throw new Error("Invalid Email or Password");
+          if (!user) {
+            throw new Error("Invalid Email or Password");
+          }
+
+          // Check if password exists
+          if (!user.password) {
+            throw new Error("Password not set");
+          }
+
+          // Compare passwords
+          const isPasswordCorrect = await bcrypt.compare(
+            credentials!.password,
+            user.password,
+          );
+
+          if (!isPasswordCorrect) {
+            throw new Error("Invalid Email or Password");
+          }
+
+          // Return user with role
+          return {
+            _id: user._id,
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (error: any) {
+          console.error("Auth error:", error.message, error.cause);
+          throw new Error(error.message || "Authentication failed. Please check MongoDB connection.");
         }
-
-        // Check if password exists
-        if (!user.password) {
-          throw new Error("Password not set");
-        }
-
-        // Compare passwords
-        const isPasswordCorrect = await bcrypt.compare(
-          credentials!.password,
-          user.password,
-        );
-
-        if (!isPasswordCorrect) {
-          throw new Error("Invalid Email or Password");
-        }
-
-        // Return user with role
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role, // Admin/Waiter/Receptionist/Manager
-        };
       },
     }),
   ],
 
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+
+  pages: {
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
+  },
+
+  debug: process.env.NODE_ENV === "development",
 
   callbacks: {
     async signIn({ user, account }) {

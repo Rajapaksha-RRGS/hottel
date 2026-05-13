@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -71,6 +72,7 @@ export default function AdminLayout({ initialMenu = 'dashboard' }: AdminLayoutPr
   const [activeMenu, setActiveMenu] = useState(initialMenu);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -78,6 +80,15 @@ export default function AdminLayout({ initialMenu = 'dashboard' }: AdminLayoutPr
     month: 'long',
     day: 'numeric',
   });
+
+  const getUserInitials = (name: string | undefined | null): string => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join('');
+  };
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -261,11 +272,21 @@ export default function AdminLayout({ initialMenu = 'dashboard' }: AdminLayoutPr
             {/* User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-slate-800/50">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500/30 to-amber-600/20 flex items-center justify-center text-sm font-semibold text-amber-400 border border-amber-500/30">
-                JW
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt="User avatar"
+                    className="w-9 h-9 rounded-full"
+                  />
+                ) : (
+                  getUserInitials(session?.user?.name)
+                )}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-white">John Wick</p>
-                <p className="text-[11px] text-slate-500">Admin</p>
+                <p className="text-sm font-medium text-white">{session?.user?.name || 'User'}</p>
+                <p className="text-[11px] text-slate-500">
+                  {(session?.user as any)?.role || 'Staff'}
+                </p>
               </div>
             </div>
           </div>

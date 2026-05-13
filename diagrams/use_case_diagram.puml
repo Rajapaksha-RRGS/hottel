@@ -1,0 +1,152 @@
+@startuml UseCase_Hotel_Management
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+skinparam actor {
+    BackgroundColor #E8F5E9
+    BorderColor     #2E7D32
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+}
+
+skinparam usecase {
+    BackgroundColor #EBF3FF
+    BorderColor     #2C5F9E
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+    RoundCorner     12
+}
+
+skinparam rectangle {
+    BackgroundColor transparent
+    BorderColor     #888888
+    FontColor       #555555
+    BorderThickness 1.2
+    RoundCorner     6
+}
+
+skinparam arrow {
+    Color     #444444
+    FontSize  9
+    FontColor #333333
+    Thickness 1.2
+}
+
+title Figure 3.4 — Use Case Diagram\nHotel & Tour Management System
+
+' ══════════════════════════════════════════════════════════
+'  ACTORS
+' ══════════════════════════════════════════════════════════
+actor "Guest"                as Guest
+actor "Receptionist"         as Receptionist
+actor "Waiter /\nKitchen Staff" as Waiter
+actor "Admin"                as Admin
+
+' ══════════════════════════════════════════════════════════
+'  SYSTEM BOUNDARY
+' ══════════════════════════════════════════════════════════
+rectangle "**Hotel & Tour Management System**" {
+
+    ' ─── Guest Use Cases ────────────────────────────────
+    usecase "Browse Rooms &\nCheck Availability"    as UC1
+    usecase "Submit Room\nBooking Request"          as UC2
+    usecase "Receive Booking\nConfirmation Email"   as UC3
+    usecase "View & Book\nTour Packages"            as UC4
+    usecase "Submit Feedback"                       as UC5
+    usecase "Submit Complaint"                      as UC6
+    usecase "View Invoice /\nReceipt"               as UC7
+
+    ' ─── Receptionist Use Cases ─────────────────────────
+    usecase "Create Room\nBooking"                  as UC8
+    usecase "Process Guest\nCheck-In"               as UC9
+    usecase "Process Guest\nCheck-Out"              as UC10
+    usecase "Verify NIC /\nPassport"                as UC11
+    usecase "Generate Invoice\n& Process Payment"   as UC12
+    usecase "Book Tour Package\nfor Guest"          as UC13
+    usecase "Manage Guest\nComplaints"              as UC14
+    usecase "View Reception\nDashboard"             as UC15
+
+    ' ─── Waiter / Kitchen Use Cases ─────────────────────
+    usecase "Take Food Order\n(Room / Table)"       as UC16
+    usecase "Update Order\nStatus"                  as UC17
+    usecase "View Active\nOrders (POS)"             as UC18
+
+    ' ─── Admin Use Cases ────────────────────────────────
+    usecase "Manage Rooms\n(Add / Edit / Delete)"   as UC19
+    usecase "Register Staff &\nManage User Roles"   as UC20
+    usecase "Manage Menu\n(Food Items)"             as UC21
+    usecase "Manage Tour\nPackages"                 as UC22
+    usecase "View Operational\nReports & Stats"     as UC23
+    usecase "Upload Images\n(Cloudinary)"           as UC24
+
+    ' ─── Shared Use Cases ───────────────────────────────
+    usecase "Authenticate /\nLogin"                 as UC25
+    usecase "Check Room\nAvailability"              as UC26
+}
+
+' ══════════════════════════════════════════════════════════
+'  GUEST ASSOCIATIONS
+' ══════════════════════════════════════════════════════════
+Guest --> UC1
+Guest --> UC2
+Guest --> UC4
+Guest --> UC5
+Guest --> UC6
+Guest --> UC7
+
+' ══════════════════════════════════════════════════════════
+'  RECEPTIONIST ASSOCIATIONS
+' ══════════════════════════════════════════════════════════
+Receptionist --> UC25
+Receptionist --> UC8
+Receptionist --> UC9
+Receptionist --> UC10
+Receptionist --> UC12
+Receptionist --> UC13
+Receptionist --> UC14
+Receptionist --> UC15
+
+' ══════════════════════════════════════════════════════════
+'  WAITER ASSOCIATIONS
+' ══════════════════════════════════════════════════════════
+Waiter --> UC25
+Waiter --> UC16
+Waiter --> UC17
+Waiter --> UC18
+
+' ══════════════════════════════════════════════════════════
+'  ADMIN ASSOCIATIONS
+' ══════════════════════════════════════════════════════════
+Admin --> UC25
+Admin --> UC19
+Admin --> UC20
+Admin --> UC21
+Admin --> UC22
+Admin --> UC23
+Admin --> UC24
+
+' ══════════════════════════════════════════════════════════
+'  <<include>> and <<extend>> RELATIONSHIPS
+' ══════════════════════════════════════════════════════════
+
+'  Booking triggers confirmation email
+UC2  .> UC3  : <<include>>
+
+'  Booking checks availability first
+UC2  .> UC26 : <<include>>
+UC8  .> UC26 : <<include>>
+
+'  Check-In requires NIC/Passport verification
+UC9  .> UC11 : <<include>>
+
+'  Invoice generation uses food + tour data
+UC12 .> UC7  : <<include>>
+
+'  Admin image uploads used in rooms and menu
+UC19 .> UC24 : <<extend>>
+UC21 .> UC24 : <<extend>>
+UC22 .> UC24 : <<extend>>
+
+@enduml

@@ -18,6 +18,8 @@ export interface IRoomBooking extends Document {
   status: BookingStatus;
   specialRequests?: string;
   notes?: string;
+  nicNumber?: string;
+  passportNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +78,14 @@ const RoomBookingSchema: Schema<IRoomBooking> = new Schema(
     },
     specialRequests: String,
     notes: String,
+    nicNumber: {
+      type: String,
+      default: '',
+    },
+    passportNumber: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

@@ -1,0 +1,251 @@
+@startuml ERD_Hotel_Management
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+skinparam entity {
+    BackgroundColor #EBF3FF
+    BorderColor     #2C5F9E
+    FontColor       #1A1A2E
+    BorderThickness 1.5
+}
+
+skinparam class {
+    BackgroundColor     #EBF3FF
+    BorderColor         #2C5F9E
+    AttributeFontColor  #333333
+    FontColor           #1A1A2E
+    BorderThickness     1.5
+    HeaderBackgroundColor #2C5F9E
+    FontColor           white
+}
+
+skinparam arrow {
+    Color     #444444
+    FontSize  9
+    FontColor #333333
+    Thickness 1.2
+}
+
+title Figure 3.3 — Entity Relationship Diagram\nHotel & Tour Management System
+
+' ══════════════════════════════════════════════════════════
+'  ENTITIES
+' ══════════════════════════════════════════════════════════
+
+entity "**User**\n(Staff)" as User {
+    * _id          : ObjectId   <<PK>>
+    --
+    name           : String
+    email          : String     <<UK>>
+    password       : String     <<hashed>>
+    role           : Enum       [Admin | Receptionist | Waiter | Manager]
+    image          : String     (URL)
+    isActive       : Boolean
+    createdAt      : Date
+    updatedAt      : Date
+}
+
+entity "**Room**" as Room {
+    * _id          : ObjectId   <<PK>>
+    --
+    roomNumber     : String     <<UK>>
+    type           : Enum       [Standard | Deluxe | Beach-Cabana | Family-Suite]
+    status         : Enum       [Available | Occupied | Cleaning | Maintenance]
+    pricePerNight  : Number
+    amenities      : String[]
+    maxOccupancy   : Number
+    description    : String
+    images         : String[]   (URLs)
+    lastCleaned    : Date
+    createdAt      : Date
+    updatedAt      : Date
+}
+
+entity "**RoomBooking**" as RoomBooking {
+    * _id           : ObjectId   <<PK>>
+    --
+    guestName       : String
+    guestEmail      : String
+    guestPhone      : String
+    room            : ObjectId   <<FK → Room>>
+    checkInDate     : Date
+    checkOutDate    : Date
+    numberOfGuests  : Number
+    totalAmount     : Number
+    advancePayment  : Number
+    paymentStatus   : Enum       [Pending | Partially-Paid | Paid]
+    status          : Enum       [Confirmed | Checked-In | Checked-Out | Cancelled]
+    specialRequests : String
+    nicNumber       : String
+    passportNumber  : String
+    createdAt       : Date
+    updatedAt       : Date
+}
+
+entity "**Guest**" as GuestEntity {
+    * _id      : ObjectId   <<PK>>
+    --
+    name       : String
+    email      : String     <<UK>>
+    phone      : String
+    message    : String
+    password   : String     <<hashed>>
+    image      : String     (URL)
+    isActive   : Boolean
+    createdAt  : Date
+    updatedAt  : Date
+}
+
+entity "**FoodItem**\n(Menu)" as FoodItem {
+    * _id          : ObjectId   <<PK>>
+    --
+    name           : String
+    category       : Enum       [Appetizer | Main | Dessert | Beverage | ...]
+    prices.normal  : Number
+    prices.full    : Number
+    image          : String     (URL)
+    prepTime       : String
+    allergens      : String[]
+    spiceLevel     : Number     (0-5)
+    isAvailable    : Boolean
+    description    : String
+}
+
+entity "**FoodOrder**" as FoodOrder {
+    * _id          : ObjectId   <<PK>>
+    --
+    roomBookingId  : ObjectId   <<FK → RoomBooking>>
+    tableNumber    : String
+    orderType      : Enum       [Room | Table]
+    items          : Array      [{foodItem<<FK>>, qty, subTotal}]
+    totalBill      : Number
+    orderStatus    : Enum       [Pending | Served | Billed]
+    createdAt      : Date
+    updatedAt      : Date
+}
+
+entity "**Invoice**" as Invoice {
+    * _id           : ObjectId   <<PK>>
+    --
+    invoiceNumber   : String     <<UK>>
+    roomBookingId   : ObjectId   <<FK → RoomBooking>>
+    tableNumber     : String
+    invoiceType     : Enum       [Room | Table]
+    roomCharges     : Number
+    foodCharges     : Number
+    tourCharges     : Number
+    serviceCharge   : Number
+    tax             : Number
+    grandTotal      : Number
+    isPaid          : Boolean
+    createdAt       : Date
+    updatedAt       : Date
+}
+
+entity "**TourPackage**" as TourPackage {
+    * _id        : ObjectId   <<PK>>
+    --
+    name         : String
+    description  : String
+    location     : String
+    duration     : String
+    capacity     : Number
+    booked       : Number
+    rating       : Number     (0-5)
+    price        : Number
+    status       : Enum       [Active | Full | Inactive]
+    image        : String     (URL)
+    createdAt    : Date
+    updatedAt    : Date
+}
+
+entity "**TourBooking**" as TourBooking {
+    * _id            : ObjectId   <<PK>>
+    --
+    roomBookingId    : ObjectId   <<FK → RoomBooking>>
+    tourPackageId    : ObjectId   <<FK → TourPackage>>
+    numberOfPeople   : Number
+    bookingDate      : Date
+    totalCost        : Number
+    status           : Enum       [Scheduled | Completed | Cancelled]
+    createdAt        : Date
+    updatedAt        : Date
+}
+
+entity "**Complaint**" as Complaint {
+    * _id        : ObjectId   <<PK>>
+    --
+    guestEmail   : String
+    guestName    : String
+    category     : Enum       [Room | Service | Food | Cleanliness | Noise | Other]
+    priority     : Enum       [Low | Medium | High]
+    subject      : String
+    description  : String
+    status       : Enum       [Open | In-Progress | Resolved]
+    createdAt    : Date
+    updatedAt    : Date
+}
+
+entity "**Feedback**" as Feedback {
+    * _id        : ObjectId   <<PK>>
+    --
+    guestEmail   : String
+    guestName    : String
+    category     : Enum       [Room | Service | Food | Overall]
+    rating       : Number     (1-5)
+    message      : String
+    bookingId    : ObjectId   <<FK → RoomBooking>>
+    createdAt    : Date
+    updatedAt    : Date
+}
+
+entity "**Product**\n(Inventory)" as Product {
+    * _id          : ObjectId   <<PK>>
+    --
+    productId      : String     <<UK>>
+    productName    : String
+    altName        : String[]
+    description    : String
+    img            : String[]   (URLs)
+    labelPrice     : Number
+    Price          : Number
+    stock          : Number
+    isAvailable    : Boolean
+    createdAt      : Date
+    updatedAt      : Date
+}
+
+' ══════════════════════════════════════════════════════════
+'  RELATIONSHIPS
+' ══════════════════════════════════════════════════════════
+
+'  Room → RoomBooking   (one-to-many)
+Room         ||--o{  RoomBooking  : "is reserved as >"
+
+'  RoomBooking → FoodOrder   (one-to-many)
+RoomBooking  ||--o{  FoodOrder   : "includes >"
+
+'  FoodItem → FoodOrder   (many-to-many via items array)
+FoodItem     }o--o{  FoodOrder   : "< ordered in"
+
+'  RoomBooking → Invoice   (one-to-one / one-to-many)
+RoomBooking  ||--o|  Invoice     : "generates >"
+
+'  RoomBooking → TourBooking   (one-to-many)
+RoomBooking  ||--o{  TourBooking : "linked to >"
+
+'  TourPackage → TourBooking   (one-to-many)
+TourPackage  ||--o{  TourBooking : "is booked via >"
+
+'  RoomBooking → Feedback   (one-to-many)
+RoomBooking  ||--o{  Feedback    : "receives >"
+
+'  Guest → Complaint  (logical — via email, not FK)
+GuestEntity  ||--o{  Complaint   : "submits >"
+
+'  Guest → Feedback   (logical — via email, not FK)
+GuestEntity  ||--o{  Feedback    : "submits >"
+
+@enduml

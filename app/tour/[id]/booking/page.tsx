@@ -1,17 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Calendar, Users, Mail, Phone, User } from 'lucide-react';
 import Link from 'next/link';
 import Navigation from '../../../../components/components/Herder';
 import Footer from '../../../../components/components/Footer';
 
-const dummyTours = [
-  { id: 1, name: "Ambewela Dairy Farm Visit", location: "Ella to Ambewela", duration: "1 Day", price: 15000, rating: 5, category: "Cultural", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000", capacity: 20, description: "Experience the serene beauty of Ambewela Dairy Farm, nestled in the misty hills of Sri Lanka. Learn about traditional dairy farming and enjoy fresh local produce." },
-  { id: 2, name: "Ambewela - Nuwara Eliya - Ella Scenic Tour", location: "Ambewela to Ella", duration: "1 Day", price: 20000, rating: 4.8, category: "Adventure", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1000", capacity: 10, description: "Embark on a breathtaking journey through Sri Lanka's hill country, visiting Ambewela, Nuwara Eliya, and Ella. Discover tea plantations, waterfalls, and stunning landscapes." },
-  { id: 3, name: "Badulla Waterfall & Nature Hike", location: "Ella to Badulla", duration: "1 Day", price: 1200, rating: 4.5, category: "Wildlife", image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=1000", capacity: 15, description: "Explore the majestic Badulla waterfalls and surrounding nature trails. This adventure combines hiking, photography, and immersion in Sri Lanka's natural wonders." },
-];
+interface Tour {
+  _id: string;
+  name: string;
+  location: string;
+  duration: string;
+  price: number;
+  rating: number;
+  category: string;
+  image: string;
+  capacity: number;
+  description: string;
+  status?: string;
+}
 
 interface FormData {
   fullName: string;
@@ -33,8 +41,11 @@ interface FormErrors {
 export default function BookingPage() {
   const params = useParams();
   const router = useRouter();
-  const id = parseInt(params.id as string);
-  const tour = dummyTours.find(t => t.id === id);
+  const id = params.id as string;
+
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -49,16 +60,68 @@ export default function BookingPage() {
     cardName: '',
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  if (!tour) {
+  useEffect(() => {
+    fetchTourDetails();
+  }, [id]);
+
+  const fetchTourDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/tours');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tours');
+      }
+
+      const data = await response.json();
+      const tours = data.tours || [];
+
+      // Find tour by _id (id is now the MongoDB _id)
+      const foundTour = tours.find((tour: any) => tour._id === id);
+
+      if (!foundTour) {
+        setError('Tour not found');
+        setTour(null);
+      } else {
+        setTour(foundTour);
+        // Initialize numberOfGuests with 1 or max capacity
+        setFormData(prev => ({
+          ...prev,
+          numberOfGuests: Math.min(1, foundTour.capacity)
+        }));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch tour details');
+      setTour(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-6 py-20 text-center">
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  if (error || !tour) {
     return (
       <main className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Tour Not Found</h1>
+          <p className="text-gray-600 mb-4">{error || 'This tour is no longer available'}</p>
           <Link href="/tour" className="text-amber-500 hover:text-amber-600">Back to Tours</Link>
         </div>
         <Footer />
@@ -78,7 +141,7 @@ export default function BookingPage() {
     if (!formData.date) newErrors.date = 'Tour date is required';
     if (formData.numberOfGuests < 1) newErrors.numberOfGuests = 'At least 1 guest is required';
     if (formData.numberOfGuests > tour.capacity) newErrors.numberOfGuests = `Maximum capacity is ${tour.capacity}`;
-    
+
     // Payment validation
     if (!formData.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
     else if (!/^\d{13,19}$/.test(formData.cardNumber.replace(/\s/g, ''))) newErrors.cardNumber = 'Invalid card number';
@@ -88,13 +151,13 @@ export default function BookingPage() {
     else if (!/^\d{3,4}$/.test(formData.cardCVC)) newErrors.cardCVC = 'Invalid CVC';
     if (!formData.cardName.trim()) newErrors.cardName = 'Cardholder name is required';
 
-    setErrors(newErrors);
+    setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'numberOfGuests') {
       setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
     } else if (name === 'cardNumber') {
@@ -110,10 +173,10 @@ export default function BookingPage() {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-    
+
     // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -134,7 +197,7 @@ export default function BookingPage() {
       // Here you would send the booking data to your backend
       console.log('Booking submitted:', {
         ...formData,
-        tourId: tour.id,
+        tourId: tour._id,
         totalPrice: totalPrice,
       });
 
@@ -146,7 +209,7 @@ export default function BookingPage() {
       }, 3000);
     } catch (error) {
       console.error('Booking error:', error);
-      setErrors({ submit: 'Booking failed. Please try again.' });
+      setFormErrors({ submit: 'Booking failed. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -213,11 +276,11 @@ export default function BookingPage() {
                       value={formData.fullName}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.fullName ? 'border-red-500' : 'border-gray-300'
+                        formErrors.fullName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Your full name"
                     />
-                    {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
+                    {formErrors.fullName && <p className="text-red-500 text-xs mt-1">{formErrors.fullName}</p>}
                   </div>
 
                   <div>
@@ -228,11 +291,11 @@ export default function BookingPage() {
                       value={formData.email}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.email ? 'border-red-500' : 'border-gray-300'
+                        formErrors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="your.email@example.com"
                     />
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
                   </div>
 
                   <div>
@@ -243,11 +306,11 @@ export default function BookingPage() {
                       value={formData.phone}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
+                        formErrors.phone ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="+94 71 234 5678"
                     />
-                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                    {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
                   </div>
                 </div>
               </div>
@@ -268,10 +331,10 @@ export default function BookingPage() {
                       value={formData.date}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.date ? 'border-red-500' : 'border-gray-300'
+                        formErrors.date ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
-                    {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
+                    {formErrors.date && <p className="text-red-500 text-xs mt-1">{formErrors.date}</p>}
                   </div>
 
                   <div>
@@ -281,7 +344,7 @@ export default function BookingPage() {
                       value={formData.numberOfGuests}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.numberOfGuests ? 'border-red-500' : 'border-gray-300'
+                        formErrors.numberOfGuests ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
                       {Array.from({ length: tour.capacity }, (_, i) => i + 1).map(num => (
@@ -290,7 +353,7 @@ export default function BookingPage() {
                         </option>
                       ))}
                     </select>
-                    {errors.numberOfGuests && <p className="text-red-500 text-xs mt-1">{errors.numberOfGuests}</p>}
+                    {formErrors.numberOfGuests && <p className="text-red-500 text-xs mt-1">{formErrors.numberOfGuests}</p>}
                   </div>
                 </div>
 
@@ -326,10 +389,10 @@ export default function BookingPage() {
                       onChange={handleChange}
                       placeholder="1234 5678 9012 3456"
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.cardNumber ? 'border-red-500' : 'border-gray-300'
+                        formErrors.cardNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
-                    {errors.cardNumber && <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>}
+                    {formErrors.cardNumber && <p className="text-red-500 text-xs mt-1">{formErrors.cardNumber}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -342,10 +405,10 @@ export default function BookingPage() {
                         onChange={handleChange}
                         placeholder="MM/YY"
                         className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.cardExpiry ? 'border-red-500' : 'border-gray-300'
+                          formErrors.cardExpiry ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
-                      {errors.cardExpiry && <p className="text-red-500 text-xs mt-1">{errors.cardExpiry}</p>}
+                      {formErrors.cardExpiry && <p className="text-red-500 text-xs mt-1">{formErrors.cardExpiry}</p>}
                     </div>
 
                     <div>
@@ -357,10 +420,10 @@ export default function BookingPage() {
                         onChange={handleChange}
                         placeholder="123"
                         className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.cardCVC ? 'border-red-500' : 'border-gray-300'
+                          formErrors.cardCVC ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
-                      {errors.cardCVC && <p className="text-red-500 text-xs mt-1">{errors.cardCVC}</p>}
+                      {formErrors.cardCVC && <p className="text-red-500 text-xs mt-1">{formErrors.cardCVC}</p>}
                     </div>
                   </div>
 
@@ -373,17 +436,17 @@ export default function BookingPage() {
                       onChange={handleChange}
                       placeholder="Name on card"
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                        errors.cardName ? 'border-red-500' : 'border-gray-300'
+                        formErrors.cardName ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
-                    {errors.cardName && <p className="text-red-500 text-xs mt-1">{errors.cardName}</p>}
+                    {formErrors.cardName && <p className="text-red-500 text-xs mt-1">{formErrors.cardName}</p>}
                   </div>
                 </div>
               </div>
 
-              {errors.submit && (
+              {formErrors.submit && (
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg text-red-700">
-                  {errors.submit}
+                  {formErrors.submit}
                 </div>
               )}
 
@@ -403,7 +466,7 @@ export default function BookingPage() {
               <h3 className="text-lg font-bold text-gray-800 mb-4">Booking Summary</h3>
 
               <div className="mb-6">
-                <img src={tour.image} alt={tour.name} className="w-full h-32 object-cover rounded-lg mb-4" />
+                <img src={tour.image || "/api/placeholder/300/200"} alt={tour.name} className="w-full h-32 object-cover rounded-lg mb-4" />
                 <h4 className="font-semibold text-gray-800 text-sm mb-2">{tour.name}</h4>
                 <p className="text-xs text-gray-600">{tour.location}</p>
               </div>
