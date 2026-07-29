@@ -29,31 +29,39 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
+        if (!credentials?.email || !credentials?.password) {
+          console.error("Missing email or password");
+          return null;
+        }
+
         try {
           await connectDB();
 
           // Find user by email
-          const user = await User.findOne({ email: credentials?.email }).select(
-            "+password",
-          );
+          const user = await User.findOne({ 
+            email: credentials.email.toLowerCase() 
+          }).select("+password");
 
           if (!user) {
-            throw new Error("Invalid Email or Password");
+            console.error(`User not found: ${credentials.email}`);
+            return null;
           }
 
           // Check if password exists
           if (!user.password) {
-            throw new Error("Password not set");
+            console.error(`No password set for user: ${credentials.email}`);
+            return null;
           }
 
           // Compare passwords
           const isPasswordCorrect = await bcrypt.compare(
-            credentials!.password,
+            credentials.password,
             user.password,
           );
 
           if (!isPasswordCorrect) {
-            throw new Error("Invalid Email or Password");
+            console.error(`Invalid password for user: ${credentials.email}`);
+            return null;
           }
 
           // Return user with role
@@ -65,12 +73,18 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           };
         } catch (error: any) {
-          console.error("Auth error:", error.message, error.cause);
-          throw new Error(error.message || "Authentication failed. Please check MongoDB connection.");
+          console.error("Auth error:", {
+            message: error.message,
+            code: error.code,
+            stack: error.stack,
+          });
+          return null;
         }
       },
     }),
   ],
+
+  secret: process.env.NEXTAUTH_SECRET || "your-secret-key-change-this-in-production",
 
   session: {
     strategy: "jwt",
@@ -135,9 +149,5 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-  },
-
-  pages: {
-    signIn: "/login",
   },
 };

@@ -1,86 +1,60 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
-const bookings = [
-  {
-    id: 'BK-001',
-    guest: 'James Wilson',
-    room: 'Suite 201',
-    checkIn: 'Mar 25, 2026',
-    checkOut: 'Mar 28, 2026',
-    status: 'Checked In',
-    amount: '$1,200',
-  },
-  {
-    id: 'BK-002',
-    guest: 'Sarah Johnson',
-    room: 'Deluxe 405',
-    checkIn: 'Mar 26, 2026',
-    checkOut: 'Mar 30, 2026',
-    status: 'Confirmed',
-    amount: '$980',
-  },
-  {
-    id: 'BK-003',
-    guest: 'Robert Chen',
-    room: 'Standard 112',
-    checkIn: 'Mar 27, 2026',
-    checkOut: 'Mar 29, 2026',
-    status: 'Pending',
-    amount: '$450',
-  },
-  {
-    id: 'BK-004',
-    guest: 'Emily Davis',
-    room: 'Penthouse 501',
-    checkIn: 'Mar 26, 2026',
-    checkOut: 'Apr 02, 2026',
-    status: 'Checked In',
-    amount: '$3,500',
-  },
-  {
-    id: 'BK-005',
-    guest: 'Michael Park',
-    room: 'Suite 305',
-    checkIn: 'Mar 28, 2026',
-    checkOut: 'Mar 31, 2026',
-    status: 'Confirmed',
-    amount: '$1,650',
-  },
-  {
-    id: 'BK-006',
-    guest: 'Lisa Thompson',
-    room: 'Deluxe 210',
-    checkIn: 'Mar 29, 2026',
-    checkOut: 'Apr 01, 2026',
-    status: 'Pending',
-    amount: '$720',
-  },
-];
+interface BookingItem {
+  id: string;
+  guest: string;
+  room: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  amount: string;
+}
 
 const statusStyles: Record<string, string> = {
   'Checked In': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   Confirmed: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   Pending: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+  Completed: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  Cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
 };
 
 export default function RecentBookings() {
+  const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const json = await res.json();
+        if (json.success && json.stats && Array.isArray(json.stats.recentBookings)) {
+          setBookings(json.stats.recentBookings);
+        }
+      } catch (err) {
+        console.error('Error fetching recent bookings:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.6 }}
-      className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-6"
+      className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden"
     >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-white">Recent Bookings</h3>
-          <p className="text-sm text-slate-400 mt-1">Latest guest reservations</p>
+          <p className="text-sm text-slate-400 mt-1">Live guest reservations from database</p>
         </div>
-        <button className="text-xs text-amber-500 hover:text-amber-400 font-medium transition-colors duration-200">
-          View All →
-        </button>
       </div>
 
       <div className="overflow-x-auto">
@@ -108,42 +82,58 @@ export default function RecentBookings() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/50">
-            {bookings.map((booking, i) => (
-              <tr
-                key={booking.id}
-                className="group hover:bg-amber-500/[0.03] transition-colors duration-200 cursor-pointer"
-              >
-                <td className="py-3.5 pr-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-xs font-semibold text-amber-400 border border-amber-500/20">
-                      {booking.guest.split(' ').map(n => n[0]).join('')}
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
+                <tr
+                  key={booking.id}
+                  className="group hover:bg-amber-500/[0.03] transition-colors duration-200 cursor-pointer"
+                >
+                  <td className="py-3.5 pr-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-xs font-semibold text-amber-400 border border-amber-500/20">
+                        {booking.guest.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
+                          {booking.guest}
+                        </p>
+                        <p className="text-xs text-slate-500">{booking.id}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
-                        {booking.guest}
-                      </p>
-                      <p className="text-xs text-slate-500">{booking.id}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3.5 pr-4 text-sm text-slate-300">{booking.room}</td>
-                <td className="py-3.5 pr-4 text-sm text-slate-400">{booking.checkIn}</td>
-                <td className="py-3.5 pr-4 text-sm text-slate-400">{booking.checkOut}</td>
-                <td className="py-3.5 pr-4">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${statusStyles[booking.status]}`}
-                  >
-                    {booking.status}
-                  </span>
-                </td>
-                <td className="py-3.5 text-right text-sm font-semibold text-white">
-                  {booking.amount}
+                  </td>
+                  <td className="py-3.5 pr-4 text-sm text-slate-300">{booking.room}</td>
+                  <td className="py-3.5 pr-4 text-sm text-slate-400">{booking.checkIn}</td>
+                  <td className="py-3.5 pr-4 text-sm text-slate-400">{booking.checkOut}</td>
+                  <td className="py-3.5 pr-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                        statusStyles[booking.status] || 'bg-slate-800 text-slate-400 border-slate-700'
+                      }`}
+                    >
+                      {booking.status}
+                    </span>
+                  </td>
+                  <td className="py-3.5 text-right text-sm font-semibold text-white">
+                    {booking.amount}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-slate-500 text-sm">
+                  {loading ? 'Loading recent bookings...' : 'No bookings recorded in database yet.'}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 rounded-2xl backdrop-blur-xs">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -13,38 +13,14 @@ import {
 import { useEffect, useState } from "react";
 
 const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-interface StatsData {
-  totalBookings: number;
-  totalRooms: number;
-  activeGuests: number;
-  revenue: string;
-  occupancyRate: string;
-  monthlyRoomData: Array<{
-    _id: { year: number; month: number };
-    total: number;
-  }>;
-  monthlyFoodData: Array<{
-    _id: { year: number; month: number };
-    total: number;
-  }>;
-  monthlyTourData: Array<{
-    _id: { year: number; month: number };
-    total: number;
-  }>;
+interface ChartDataItem {
+  month: string;
+  revenue: number;
+  lastYear: number;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -53,11 +29,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 shadow-xl">
         <p className="text-slate-300 text-xs font-medium mb-1">{label}</p>
         <p className="text-amber-400 text-sm font-semibold">
-          ${payload[0].value?.toLocaleString()}
+          This Year: ${payload[0].value?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
         </p>
         {payload[1] && (
-          <p className="text-slate-500 text-xs">
-            Last Year: ${payload[1].value?.toLocaleString()}
+          <p className="text-slate-400 text-xs mt-1">
+            Last Year: ${payload[1].value?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </p>
         )}
       </div>
@@ -67,9 +43,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function RevenueChart() {
-  const [chartData, setChartData] = useState<
-    Array<{ month: string; revenue: number; lastYear: number }>
-  >([]);
+  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,85 +53,35 @@ export default function RevenueChart() {
         const data = await res.json();
 
         if (data.success && data.stats) {
-          const stats: StatsData = data.stats;
-
-          // Combine room, food, and tour revenue by month
-          const monthlyRevenue: Record<number, number> = {};
-
-          // Add room revenue
-          stats.monthlyRoomData.forEach((item) => {
-            const month = item._id.month;
-            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
-          });
-
-          // Add food revenue
-          stats.monthlyFoodData.forEach((item) => {
-            const month = item._id.month;
-            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
-          });
-
-          // Add tour revenue
-          stats.monthlyTourData.forEach((item) => {
-            const month = item._id.month;
-            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + item.total;
-          });
-
-          // Transform to chart format with both current and last year data
-          const currentYear = new Date().getFullYear();
-          const lastYear = currentYear - 1;
-
-          // Filter data for current year and last year
-          const currentYearData = stats.monthlyRoomData.filter(
-            (item) => item._id.year === currentYear,
-          );
-          const lastYearData = stats.monthlyRoomData.filter(
-            (item) => item._id.year === lastYear,
-          );
-
-          // Create lookup maps
-          const currentYearMap: Record<number, number> = {};
-          const lastYearMap: Record<number, number> = {};
-
-          currentYearData.forEach((item) => {
-            currentYearMap[item._id.month] = item.total;
-          });
-
-          lastYearData.forEach((item) => {
-            lastYearMap[item._id.month] = item.total;
-          });
-
-          // Build chart data for all 12 months
-          const formattedData = monthNames.map((monthName, index) => {
-            const monthNum = index + 1;
-            const currentRevenue = currentYearMap[monthNum] || 0;
-            const lastRevenue = lastYearMap[monthNum] || 0;
-            return {
-              month: monthName,
-              revenue: currentRevenue,
-              lastYear: lastRevenue,
-            };
-          });
-
-          setChartData(formattedData);
+          if (Array.isArray(data.stats.monthlyChartData) && data.stats.monthlyChartData.length > 0) {
+            setChartData(data.stats.monthlyChartData);
+          } else {
+            // Fallback initialization
+            setChartData(
+              monthNames.map((month) => ({
+                month,
+                revenue: 0,
+                lastYear: 0,
+              }))
+            );
+          }
         } else {
-          // Fallback to placeholder data
           setChartData(
             monthNames.map((month) => ({
               month,
               revenue: 0,
               lastYear: 0,
-            })),
+            }))
           );
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
-        // Fallback to placeholder data
+        console.error("Error fetching stats for RevenueChart:", error);
         setChartData(
           monthNames.map((month) => ({
             month,
             revenue: 0,
             lastYear: 0,
-          })),
+          }))
         );
       } finally {
         setLoading(false);
@@ -172,13 +96,13 @@ export default function RevenueChart() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
-      className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-6"
+      className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden"
     >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-white">Revenue Overview</h3>
           <p className="text-sm text-slate-400 mt-1">
-            Monthly revenue performance
+            Monthly combined revenue performance (Room, Food & Tours)
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs">
@@ -192,6 +116,7 @@ export default function RevenueChart() {
           </div>
         </div>
       </div>
+
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -219,7 +144,7 @@ export default function RevenueChart() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: "#64748b", fontSize: 12 }}
-              tickFormatter={(v) => `$${v / 1000}k`}
+              tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -247,8 +172,9 @@ export default function RevenueChart() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 rounded-2xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 rounded-2xl backdrop-blur-xs">
           <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}

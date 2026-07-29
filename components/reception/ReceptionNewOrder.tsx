@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Minus, Plus, ShoppingCart, Send, X, Utensils,
-  Coffee, Wine, IceCream, Salad, Martini, Zap, Loader,
+  Coffee, IceCream, Salad, Martini, Zap, Loader, BedDouble, Grid3x3, Check,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -26,13 +26,15 @@ type CartItem = {
 
 const TABLES = Array.from({ length: 12 }, (_, i) => `Table ${String(i + 1).padStart(2, '0')}`);
 
+// Solid, high-contrast category colors — staff scan these tiles fast, so
+// each category gets one unmistakable color instead of a subtle gradient.
 const CATEGORIES = [
-  { id: 'Appetizer', label: 'Appetizer', icon: Salad, color: 'from-emerald-400/20 to-emerald-600/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
-  { id: 'Main', label: 'Main Course', icon: Utensils, color: 'from-amber-400/20 to-amber-600/10', border: 'border-amber-500/30', text: 'text-amber-400' },
-  { id: 'Dessert', label: 'Desserts', icon: IceCream, color: 'from-pink-400/20 to-pink-600/10', border: 'border-pink-500/30', text: 'text-pink-400' },
-  { id: 'Beverage', label: 'Drinks', icon: Coffee, color: 'from-sky-400/20 to-sky-600/10', border: 'border-sky-500/30', text: 'text-sky-400' },
-  { id: 'Cocktail', label: 'Cocktails', icon: Martini, color: 'from-violet-400/20 to-violet-600/10', border: 'border-violet-500/30', text: 'text-violet-400' },
-  { id: 'Shot', label: 'Shots', icon: Zap, color: 'from-red-400/20 to-red-600/10', border: 'border-red-500/30', text: 'text-red-400' },
+  { id: 'Appetizer', label: 'Appetizer', icon: Salad, solid: 'bg-emerald-600', ring: 'ring-emerald-400', soft: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  { id: 'Main', label: 'Main Course', icon: Utensils, solid: 'bg-amber-600', ring: 'ring-amber-400', soft: 'bg-amber-500/10', text: 'text-amber-400' },
+  { id: 'Dessert', label: 'Desserts', icon: IceCream, solid: 'bg-pink-600', ring: 'ring-pink-400', soft: 'bg-pink-500/10', text: 'text-pink-400' },
+  { id: 'Beverage', label: 'Drinks', icon: Coffee, solid: 'bg-sky-600', ring: 'ring-sky-400', soft: 'bg-sky-500/10', text: 'text-sky-400' },
+  { id: 'Cocktail', label: 'Cocktails', icon: Martini, solid: 'bg-violet-600', ring: 'ring-violet-400', soft: 'bg-violet-500/10', text: 'text-violet-400' },
+  { id: 'Shot', label: 'Shots', icon: Zap, solid: 'bg-red-600', ring: 'ring-red-400', soft: 'bg-red-500/10', text: 'text-red-400' },
 ];
 
 export default function ReceptionNewOrder() {
@@ -42,6 +44,7 @@ export default function ReceptionNewOrder() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedTable, setSelectedTable] = useState('');
+  const [selectionMode, setSelectionMode] = useState<'table' | 'room'>('table');
   const [bookings, setBookings] = useState<any[]>([]);
   const [placing, setPlacing] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -76,7 +79,7 @@ export default function ReceptionNewOrder() {
           );
           setBookings(checkedIn);
           if (checkedIn.length === 0) {
-            console.warn('No checked-in bookings found. Rooms optgroup will show "No active bookings".');
+            console.warn('No checked-in bookings found. Room picker will show "No active bookings".');
           }
         }
       } catch (err) {
@@ -125,39 +128,26 @@ export default function ReceptionNewOrder() {
   };
 
   const getQty = (id: string) => cart.find((c) => c.foodItem === id)?.quantity || 0;
+  const itemCount = cart.reduce((sum, c) => sum + c.quantity, 0);
   const subtotal = cart.reduce((sum, c) => sum + c.subTotal, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
-  const isRoomSelection = (value: string) => {
-    const isRoom = bookings.some((b) => b._id === value);
-    return isRoom;
-  };
-
   const getSelectionInfo = () => {
     if (!selectedTable) return null;
-
-    const isRoom = isRoomSelection(selectedTable);
-    if (isRoom) {
+    if (selectionMode === 'room') {
       const booking = bookings.find((b) => b._id === selectedTable);
       if (booking) {
         return {
-          type: 'room',
-          booking,
-          display: `Room ${booking.room?.roomNumber || 'Pending Room'} — ${booking.guestName || 'Guest'}`,
+          type: 'room' as const,
+          display: `Room ${booking.room?.roomNumber || 'Pending Room'}`,
           guestName: booking.guestName || 'Guest',
           roomNumber: booking.room?.roomNumber || 'Pending Room',
         };
       }
+      return null;
     }
-
-    return {
-      type: 'table',
-      booking: null,
-      display: selectedTable,
-      guestName: null,
-      roomNumber: null,
-    };
+    return { type: 'table' as const, display: selectedTable, guestName: null, roomNumber: null };
   };
 
   // Place order
@@ -218,26 +208,26 @@ export default function ReceptionNewOrder() {
   };
 
   const selection = getSelectionInfo();
+  const activeCat = CATEGORIES.find((c) => c.id === activeCategory)!;
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-144px)]">
+    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-144px)]">
       {/* ═══ Left: Menu Area ═══ */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Search Bar */}
-        <div className="relative mb-5">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <div className="relative mb-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search food or drinks..."
-            className="w-full bg-luxury-card border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-300"
-            style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
+            className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl pl-12 pr-4 py-3.5 text-base text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
         </div>
 
-        {/* Category Tabs */}
-        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {/* Category Tabs — large, solid, POS-style segmented control */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
             const isActive = activeCategory === cat.id;
@@ -246,26 +236,28 @@ export default function ReceptionNewOrder() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`relative p-3 rounded-lg transition-all duration-300 text-left overflow-hidden border ${
+                className={`flex-shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-150 active:scale-95 ${
                   isActive
-                    ? `bg-gradient-to-br ${cat.color} border-slate-600`
-                    : 'bg-luxury-card border-slate-700'
+                    ? `${cat.solid} text-white shadow-lg`
+                    : 'bg-slate-900 text-slate-400 border-2 border-slate-800 hover:border-slate-700'
                 }`}
-                style={isActive ? { boxShadow: '0 8px 24px rgba(6, 182, 212, 0.15), 0 0 20px rgba(6, 182, 212, 0.08)' } : { boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
               >
-                {isActive && (
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/[0.04] to-transparent rounded-bl-full" />
-                )}
-                <Icon className={`w-4 h-4 mb-1.5 ${isActive ? cat.text : 'text-slate-500'}`} />
-                <p className={`text-xs font-semibold ${isActive ? 'text-cyan-white' : 'text-slate-400'}`}>{cat.label}</p>
-                <p className={`text-[10px] mt-0.5 ${isActive ? 'text-slate-400' : 'text-slate-500'}`}>{count} items</p>
+                <Icon className="w-5 h-5" />
+                <span>{cat.label}</span>
+                <span
+                  className={`text-xs font-semibold rounded-full px-1.5 py-0.5 min-w-[22px] text-center ${
+                    isActive ? 'bg-white/20' : 'bg-slate-800 text-slate-500'
+                  }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Food Items Grid */}
-        <div className="flex-1 overflow-y-auto pr-1">
+        {/* Food Items Grid — whole tile is tappable, like a POS register button */}
+        <div className="flex-1 overflow-y-auto pr-1 min-h-0">
           {loadingMenu ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -281,48 +273,60 @@ export default function ReceptionNewOrder() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredItems.map((item, idx) => {
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredItems.map((item) => {
                 const qty = getQty(item._id);
+                const inCart = qty > 0;
                 return (
-                  <motion.div
+                  <button
                     key={item._id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="group relative bg-luxury-card rounded-lg p-4 overflow-hidden transition-all duration-300 hover:shadow-lg border border-slate-700"
-                    style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
+                    onClick={() => addToCart(item)}
+                    className={`relative text-left rounded-xl p-4 pt-3 transition-all duration-150 active:scale-[0.97] border-2 ${
+                      inCart
+                        ? `${activeCat.soft} ${activeCat.ring.replace('ring-', 'border-')}`
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                    }`}
                   >
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-emerald-500/[0.05] to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    {/* Category accent bar */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${activeCat.solid}`} />
 
-                    {/* "ORDER → KITCHEN" label */}
-                    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mb-3">Order → Kitchen</p>
+                    {inCart && (
+                      <div className={`absolute top-3 right-3 w-6 h-6 rounded-full ${activeCat.solid} flex items-center justify-center`}>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )}
 
-                    <h4 className="text-white font-semibold text-sm mb-1">{item.name}</h4>
-                    <p className="text-emerald-400 font-bold text-base mb-4">${item.prices.normal.toFixed(2)}</p>
+                    <h4 className="text-white font-bold text-base leading-snug mb-1 pr-6">{item.name}</h4>
+                    <p className={`font-extrabold text-lg mb-3 ${activeCat.text}`}>${item.prices.normal.toFixed(2)}</p>
 
-                    {/* Quantity Controls */}
                     <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => removeFromCart(item._id)}
-                        disabled={qty === 0}
-                        className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 border border-slate-700"
-                        style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className={`text-sm font-bold min-w-[24px] text-center ${qty > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
-                        {qty}
+                      <span className="text-[11px] uppercase tracking-wide font-semibold text-slate-500">
+                        Tap to add
                       </span>
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white hover:bg-emerald-700 transition-all duration-200"
-                        style={{ boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)' }}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      {inCart && (
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => removeFromCart(item._id)}
+                            aria-label={`Remove one ${item.name}`}
+                            className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-white active:scale-90 transition-transform"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="text-white font-extrabold text-base min-w-[20px] text-center">{qty}</span>
+                          <button
+                            onClick={() => addToCart(item)}
+                            aria-label={`Add one more ${item.name}`}
+                            className={`w-8 h-8 rounded-lg ${activeCat.solid} flex items-center justify-center text-white active:scale-90 transition-transform`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </motion.div>
+                  </button>
                 );
               })}
             </div>
@@ -331,65 +335,89 @@ export default function ReceptionNewOrder() {
       </div>
 
       {/* ═══ Right: Order Sidebar ═══ */}
-      <div
-        className="w-[320px] flex-shrink-0 bg-luxury-card rounded-lg flex flex-col overflow-hidden border border-slate-700"
-        style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
-      >
-        {/* Sidebar Header — Table Selection */}
-        <div className="p-5 flex flex-col space-y-4 bg-gradient-to-b from-luxury-card to-slate-800/50" style={{ boxShadow: 'inset 0 -1px 3px rgba(0, 0, 0, 0.3)' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-bold text-sm">Current Order</h3>
-            <ShoppingCart className="w-4 h-4 text-emerald-400" />
+      <div className="w-full lg:w-[360px] flex-shrink-0 bg-slate-900 rounded-2xl flex flex-col overflow-hidden border-2 border-slate-800">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-4 border-b-2 border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-extrabold text-base">Current Order</h3>
+            <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-full">
+              <ShoppingCart className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-400">{itemCount}</span>
+            </div>
           </div>
-          <select
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer"
-            style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
-          >
-            <option value="">Select Room / Table</option>
-            <optgroup label="🛏️ Rooms">
-              {bookings.length === 0 ? (
-                <option disabled>No active bookings</option>
+
+          {/* Table / Room mode toggle — big segmented buttons, not a dropdown */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => { setSelectionMode('table'); setSelectedTable(''); }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-colors ${
+                selectionMode === 'table' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              <Grid3x3 className="w-4 h-4" /> Table
+            </button>
+            <button
+              onClick={() => { setSelectionMode('room'); setSelectedTable(''); }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-colors ${
+                selectionMode === 'room' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              <BedDouble className="w-4 h-4" /> Room
+            </button>
+          </div>
+
+          {/* Picker grid */}
+          <div className="max-h-32 overflow-y-auto grid grid-cols-3 gap-2">
+            {selectionMode === 'table'
+              ? TABLES.map((table) => (
+                  <button
+                    key={table}
+                    onClick={() => setSelectedTable(table)}
+                    className={`py-2 rounded-lg text-xs font-bold transition-colors ${
+                      selectedTable === table
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {table.replace('Table ', 'T')}
+                  </button>
+                ))
+              : bookings.length === 0
+              ? (
+                <p className="col-span-3 text-xs text-slate-500 text-center py-3">No active bookings</p>
               ) : (
                 bookings.map((b: any) => (
-                  <option key={b._id} value={b._id}>
-                    Room {b.room?.roomNumber || 'Pending Room'} — {b.guestName || 'Guest'}
-                  </option>
+                  <button
+                    key={b._id}
+                    onClick={() => setSelectedTable(b._id)}
+                    className={`col-span-3 flex items-center justify-between py-2 px-3 rounded-lg text-xs font-bold transition-colors ${
+                      selectedTable === b._id
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span>Room {b.room?.roomNumber || 'Pending'}</span>
+                    <span className="font-medium opacity-80 truncate max-w-[110px]">{b.guestName || 'Guest'}</span>
+                  </button>
                 ))
               )}
-            </optgroup>
-            <optgroup label="🍽️ Tables">
-              {TABLES.map((table) => (
-                <option key={table} value={table}>
-                  {table}
-                </option>
-              ))}
-            </optgroup>
-          </select>
+          </div>
+
           {selection && (
-            <p className="text-[11px] text-slate-400 mt-2">
-              {selection.type === 'room' ? (
-                <>
-                  🏨 Room: <span className="text-slate-300">{selection.roomNumber}</span>
-                  <br />
-                  👤 Guest: <span className="text-slate-300">{selection.guestName}</span>
-                </>
-              ) : (
-                <>
-                  🍽️ Table: <span className="text-slate-300">{selection.display}</span>
-                </>
-              )}
+            <p className="text-xs text-slate-400 mt-3 bg-slate-800/60 rounded-lg px-3 py-2">
+              {selection.type === 'room'
+                ? <>Sending to <span className="text-white font-semibold">Room {selection.roomNumber}</span> — {selection.guestName}</>
+                : <>Sending to <span className="text-white font-semibold">{selection.display}</span></>}
             </p>
           )}
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-[120px]">
           <AnimatePresence>
             {cart.length === 0 ? (
               <div className="text-center py-8">
-                <Utensils className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                <Utensils className="w-8 h-8 mx-auto mb-2 text-slate-700" />
                 <p className="text-xs text-slate-500">No items added yet</p>
               </div>
             ) : (
@@ -399,20 +427,22 @@ export default function ReceptionNewOrder() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700"
-                  style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.2)' }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-800"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-[11px] text-slate-400">×{item.quantity}</p>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-700 text-white text-xs font-extrabold flex items-center justify-center">
+                      {item.quantity}
+                    </span>
+                    <p className="text-white text-sm font-semibold truncate">{item.name}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 font-bold text-sm">${item.subTotal.toFixed(2)}</span>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-emerald-400 font-extrabold text-sm">${item.subTotal.toFixed(2)}</span>
                     <button
                       onClick={() => setCart((prev) => prev.filter((c) => c.foodItem !== item.foodItem))}
-                      className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-colors border border-red-500/30"
+                      aria-label={`Remove ${item.name} from order`}
+                      className="w-7 h-7 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 active:scale-90 transition-transform"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </motion.div>
@@ -421,58 +451,54 @@ export default function ReceptionNewOrder() {
           </AnimatePresence>
         </div>
 
-        {/* Totals & Actions */}
-        <div className="p-5 space-y-3" style={{ boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.3)' }}>
-          {/* Totals */}
-          <div className="space-y-2 text-sm">
+        {/* Totals & Actions — sticky bottom bar, big and unmissable */}
+        <div className="p-5 pt-4 border-t-2 border-slate-800 space-y-3">
+          <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-slate-400">
               <span>Subtotal</span>
-              <span className="text-slate-300">${subtotal.toFixed(2)}</span>
+              <span className="text-slate-300 font-medium">${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Tax 10%</span>
-              <span className="text-slate-300">${tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-slate-700">
-              <span>Total</span>
-              <span className="text-emerald-400">${total.toFixed(2)}</span>
+              <span className="text-slate-300 font-medium">${tax.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Success Message */}
+          <div className="flex justify-between items-center bg-slate-800 rounded-xl px-4 py-3">
+            <span className="text-white font-bold">Total</span>
+            <span className="text-emerald-400 font-extrabold text-2xl">${total.toFixed(2)}</span>
+          </div>
+
           <AnimatePresence>
             {successMsg && (
               <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="text-center text-emerald-300 text-sm font-semibold bg-emerald-500/20 rounded-lg py-2 border border-emerald-500/30"
-                style={{ boxShadow: '0 2px 8px rgba(52, 211, 153, 0.15)' }}
+                className="text-center text-emerald-300 text-sm font-bold bg-emerald-500/20 rounded-xl py-2.5"
               >
                 ✓ {successMsg}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Cancel */}
-          <button
-            onClick={() => { setCart([]); setSelectedTable(''); }}
-            disabled={cart.length === 0}
-            className="w-full py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed border border-slate-700"
-          >
-            Cancel Order
-          </button>
-
-          {/* Place Order */}
-          <button
-            onClick={placeOrder}
-            disabled={cart.length === 0 || !selectedTable || placing}
-            className="w-full py-3 rounded-lg bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300"
-            style={{ boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)' }}
-          >
-            <Send className="w-4 h-4" />
-            {placing ? 'Sending...' : 'Place Order → Kitchen'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setCart([]); setSelectedTable(''); }}
+              disabled={cart.length === 0}
+              className="flex-1 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-2 border-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={placeOrder}
+              disabled={cart.length === 0 || !selectedTable || placing}
+              className="flex-[2] py-3 rounded-xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              <Send className="w-4 h-4" />
+              {placing ? 'Sending...' : 'Send to Kitchen'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

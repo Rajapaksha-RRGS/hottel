@@ -15,6 +15,7 @@ import {
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
+import SubmittedTourBookings from "./SubmittedTourBookings";
 
 interface Tour {
   _id: string;
@@ -28,6 +29,10 @@ interface Tour {
   price: number;
   status: "Active" | "Full" | "Inactive";
   image: string;
+  category: "Cultural" | "Adventure" | "Wildlife";
+  vehicle: string;
+  itinerary: string;
+  highlights: string[];
 }
 
 interface FormData {
@@ -39,6 +44,10 @@ interface FormData {
   price: string;
   status: "Active" | "Full" | "Inactive";
   image: string;
+  category: "Cultural" | "Adventure" | "Wildlife";
+  vehicle: string;
+  itinerary: string;
+  highlights: string;
 }
 
 const initialFormData: FormData = {
@@ -50,6 +59,10 @@ const initialFormData: FormData = {
   price: "",
   status: "Active",
   image: "",
+  category: "Cultural",
+  vehicle: "",
+  itinerary: "",
+  highlights: "",
 };
 
 const statusColors: Record<string, string> = {
@@ -162,6 +175,9 @@ export default function TourManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Submitted Tour Bookings Section */}
+      <SubmittedTourBookings />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -434,6 +450,70 @@ export default function TourManagement() {
                       className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
                     />
                   </div>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                  >
+                    <option value="Cultural">🏛️ Cultural</option>
+                    <option value="Adventure">🧗 Adventure</option>
+                    <option value="Wildlife">🐘 Wildlife</option>
+                  </select>
+                </div>
+
+                {/* Vehicle */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                    Vehicle Type
+                  </label>
+                  <input
+                    type="text"
+                    name="vehicle"
+                    value={formData.vehicle}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Air-conditioned Van, Safari Jeep, Bus"
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                  />
+                </div>
+
+                {/* Itinerary */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                    Itinerary
+                  </label>
+                  <textarea
+                    name="itinerary"
+                    value={formData.itinerary}
+                    onChange={handleInputChange}
+                    rows={4}
+                    placeholder="07:00 Hotel Pickup → 09:00 Sigiriya → 13:00 Lunch → 15:00 Dambulla Cave → 18:00 Return"
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none"
+                  />
+                </div>
+
+                {/* Highlights */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                    Highlights <span className="text-slate-500 font-normal">(comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="highlights"
+                    value={formData.highlights}
+                    onChange={handleInputChange}
+                    placeholder="Temple visit, Local lunch, Guided tour, Photo stops"
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                  />
+                  <p className="text-xs text-slate-500 mt-1.5">Each highlight separated by a comma</p>
                 </div>
 
                 {/* Status */}

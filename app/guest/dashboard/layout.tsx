@@ -49,7 +49,7 @@ export default function GuestDashboardLayout({
         <GuestTopBar onMenuToggle={() => setIsSidebarOpen(true)} />
 
         {/* Page content */}
-        <main className="p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
+        <main className="p-5 lg:p-8 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </div>

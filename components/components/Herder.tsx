@@ -28,7 +28,7 @@ const Navigation = () => {
   }, []);
 
   const navLinks = [
-    { name: "Rooms", to: "/Rooms" },
+    { name: "Rooms", to: "/rooms" },
     { name: "Tour", to: "/tour" },
     { name: "Spa", to: "/spa" },
     { name: "Experiences", to: "/experiences" },
@@ -40,9 +40,8 @@ const Navigation = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "glass py-4" : "bg-transparent py-6"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "glass py-4" : "bg-transparent py-6"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">

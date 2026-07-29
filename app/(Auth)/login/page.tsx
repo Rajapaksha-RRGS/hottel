@@ -16,31 +16,43 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Login failed. Check your email and password.");
+      if (result?.error) {
+        setError("Login failed. Check your email and password.");
+        setLoading(false);
+        return;
+      }
+
+      if (!result?.ok) {
+        setError("An unexpected error occurred. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const session = await getSession();
+      const role = (session?.user as any)?.role;
+
+      if (role === "Admin") {
+        router.push("/admin/dashboard");
+      } else if (role === "Waiter") {
+        router.push("/waiter/dashboard");
+      } else if (role === "Receptionist") {
+        router.push("/DashboardResiption");
+      } else {
+        router.push("/");
+      }
+      router.refresh();
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError("An error occurred during login. Please check your connection.");
       setLoading(false);
-      return;
     }
-
-    const session = await getSession();
-    const role = (session?.user as any)?.role;
-
-    if (role === "Admin") {
-      router.push("/admin/dashboard");
-    } else if (role === "Waiter") {
-      router.push("/waiter/dashboard");
-    } else if (role === "Receptionist") {
-      router.push("/DashboardResiption");
-    } else {
-      router.push("/");
-    }
-    router.refresh();
   };
 
   const handleGoogleLogin = async () => {

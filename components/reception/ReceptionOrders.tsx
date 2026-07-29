@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Coffee, Utensils, CheckCircle, Clock, RefreshCcw, Loader } from 'lucide-react';
+import { Coffee, Utensils, CheckCircle, Clock, RefreshCcw, Loader, BedDouble, Grid3x3 } from 'lucide-react';
 import { mockReceptionOrdersData } from '@/lib/mocks/receptionOrdersMock';
 import { calculateAveragePrepTime } from '@/lib/prepTimeParser';
 
@@ -11,7 +11,12 @@ export default function ReceptionOrders() {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState<string | null>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    // Auto-refresh every 30s — a kitchen board should never look stale
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -56,106 +61,117 @@ export default function ReceptionOrders() {
     }
   };
 
-  if (loading) {
+  // Urgency color coding — the longer an order waits, the louder the card gets.
+  // This is the core scanability trick real KDS boards use.
+  const getUrgency = (prepTime: number) => {
+    if (prepTime >= 25) return { border: 'border-red-500', badge: 'bg-red-500/20 text-red-400 border-red-500/30', dot: 'bg-red-500' };
+    if (prepTime >= 15) return { border: 'border-amber-500', badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30', dot: 'bg-amber-500' };
+    return { border: 'border-slate-800', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500' };
+  };
+
+  if (loading && orders.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-52 bg-obsidian-card rounded-2xl animate-pulse" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)' }} />
+          <div key={i} className="h-56 bg-slate-900 border-2 border-slate-800 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Food &amp; Beverage Orders</h2>
-          <p className="text-sm text-slate-400 mt-1">Manage pending orders for guests</p>
+          <h2 className="text-2xl font-extrabold text-white">Kitchen Orders</h2>
+          <p className="text-sm text-slate-400 mt-1">
+            {orders.length === 0 ? 'All caught up' : `${orders.length} order${orders.length === 1 ? '' : 's'} waiting`}
+          </p>
         </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-all duration-300 text-sm font-medium border border-slate-700"
-          style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors text-sm font-bold border-2 border-slate-800 active:scale-95"
         >
-          <RefreshCcw className="w-4 h-4" />
+          <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {/* Order Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Order Ticket Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {orders.length === 0 ? (
-          <div
-            className="col-span-full p-12 text-center bg-luxury-card rounded-lg relative overflow-hidden border border-slate-700"
-            style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
-          >
-            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-neon-cyan/[0.03] to-transparent rounded-bl-full" />
-            <Coffee className="w-12 h-12 mx-auto mb-3 text-slate-500" />
-            <p className="text-slate-400">No pending orders at the moment.</p>
+          <div className="col-span-full p-14 text-center bg-slate-900 rounded-2xl border-2 border-slate-800">
+            <Coffee className="w-10 h-10 mx-auto mb-3 text-slate-600" />
+            <p className="text-slate-400 font-medium">No pending orders at the moment.</p>
           </div>
         ) : (
           orders.map((order: any, idx: number) => {
             const avgPrepTime = calculateAveragePrepTime(order.items.map((item: any) => item.foodItem) || []);
+            const urgency = getUrgency(avgPrepTime);
+            const isRoom = !!order.roomBookingId;
+
             return (
               <motion.div
                 key={order._id}
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.08 }}
-                className="group relative bg-luxury-card rounded-lg p-5 overflow-hidden transition-all duration-500 hover:shadow-lg border border-slate-700"
-                style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' }}
+                transition={{ delay: idx * 0.06 }}
+                className={`relative bg-slate-900 rounded-2xl overflow-hidden border-2 ${urgency.border} flex flex-col`}
               >
-                {/* Top-right glow */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-500/[0.05] to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-                {/* Order Header */}
-                <div className="relative flex justify-between items-start mb-4">
+                {/* Ticket header — table/room + live urgency badge */}
+                <div className="flex items-start justify-between p-4 pb-3 border-b-2 border-dashed border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-lg bg-slate-700/50 flex items-center justify-center"
-                      style={{ boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3)' }}
-                    >
-                      <Utensils className="w-4 h-4 text-dataViz-orange" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0">
+                      {isRoom ? (
+                        <BedDouble className="w-5 h-5 text-sky-400" />
+                      ) : (
+                        <Grid3x3 className="w-5 h-5 text-violet-400" />
+                      )}
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold">Room {order.roomBookingId?.room?.roomNumber || 'N/A'}</h3>
-                      <p className="text-xs text-slate-400">{order.roomBookingId?.guestName || 'Guest'}</p>
+                      <h3 className="text-white font-extrabold text-base leading-tight">
+                        {isRoom ? `Room ${order.roomBookingId?.room?.roomNumber || 'N/A'}` : `Table ${order.tableNumber || 'N/A'}`}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {isRoom ? (order.roomBookingId?.guestName || 'Guest') : 'Dine-in'}
+                      </p>
                     </div>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-md border border-amber-500/30">
-                    <Clock className="w-3 h-3" />
+                  <span className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1.5 rounded-lg border ${urgency.badge}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${urgency.dot} animate-pulse`} />
                     Pending
                   </span>
                 </div>
 
-                {/* Average Prep Time Display */}
+                {/* Prep time */}
                 {avgPrepTime > 0 && (
-                  <div className="relative mb-3 p-2.5 bg-sky-500/10 rounded-lg border border-sky-500/20 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-sky-400" />
-                    <span className="text-sm font-semibold text-sky-300">~{avgPrepTime} min wait</span>
+                  <div className="mx-4 mt-3 px-3 py-2 bg-slate-800/70 rounded-lg flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm font-bold text-slate-300">~{avgPrepTime} min prep</span>
                   </div>
                 )}
 
                 {/* Items */}
-                <div className="relative space-y-2 mb-4 pt-4 border-t border-slate-700">
+                <div className="flex-1 px-4 py-3 space-y-1.5">
                   {order.items.map((item: any, i: number) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-slate-400">{item.quantity}x {item.foodItem?.name || 'Unknown Item'}</span>
-                      <span className="text-slate-300 font-medium">${item.subTotal.toFixed(2)}</span>
+                      <span className="text-slate-300 font-medium">
+                        <span className="text-white font-extrabold">{item.quantity}×</span> {item.foodItem?.name || 'Unknown Item'}
+                      </span>
+                      <span className="text-slate-400 font-semibold">${item.subTotal.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Footer */}
-                <div className="relative flex justify-between items-center pt-4 border-t border-slate-700">
-                  <span className="text-white font-bold text-lg">${order.totalBill.toFixed(2)}</span>
+                {/* Footer — big total + big action button */}
+                <div className="flex items-center justify-between gap-3 p-4 pt-3 border-t-2 border-slate-800 bg-slate-800/30">
+                  <span className="text-emerald-400 font-extrabold text-xl">${order.totalBill.toFixed(2)}</span>
                   <button
                     onClick={() => markAsServed(order._id)}
                     disabled={marking === order._id}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-3.5 py-1.5 rounded-lg transition-all duration-300 text-sm font-semibold"
-                    style={{ boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)' }}
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all text-sm font-extrabold active:scale-95"
                   >
                     {marking === order._id ? (
                       <Loader className="w-4 h-4 animate-spin" />

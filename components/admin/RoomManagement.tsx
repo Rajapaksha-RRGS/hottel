@@ -18,6 +18,7 @@ import {
   Wine,
   Image as ImageIcon,
   Trash2,
+  Edit,
 } from "lucide-react";
 
 interface Room {
@@ -66,6 +67,7 @@ export default function RoomManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -109,8 +111,34 @@ export default function RoomManagement() {
     fetchRooms();
   }, []);
 
-  // Open modal
-  const handleOpenModal = () => {
+  // Open modal (for Add or Edit)
+  const handleOpenModal = (roomToEdit?: Room) => {
+    if (roomToEdit) {
+      setEditingRoom(roomToEdit);
+      setFormData({
+        roomNumber: roomToEdit.roomNumber || "",
+        type: roomToEdit.type || "Standard",
+        status: roomToEdit.status || "Available",
+        pricePerNight: roomToEdit.pricePerNight?.toString() || "",
+        maxOccupancy: roomToEdit.maxOccupancy?.toString() || "2",
+        amenities: roomToEdit.amenities || [],
+        description: roomToEdit.description || "",
+        images: roomToEdit.images || [],
+      });
+    } else {
+      setEditingRoom(null);
+      setFormData({
+        roomNumber: "",
+        type: "Standard",
+        status: "Available",
+        pricePerNight: "",
+        maxOccupancy: "2",
+        amenities: [],
+        description: "",
+        images: [],
+      });
+    }
+    setImageUrl("");
     setIsModalOpen(true);
     dialogRef.current?.showModal();
   };
@@ -119,7 +147,7 @@ export default function RoomManagement() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     dialogRef.current?.close();
-    // Reset form
+    setEditingRoom(null);
     setFormData({
       roomNumber: "",
       type: "Standard",
@@ -162,20 +190,49 @@ export default function RoomManagement() {
     }));
   };
 
-  // Handle form submit
+  // Handle Delete Room
+  const handleDeleteRoom = async (id: string, roomNumber: string) => {
+    if (!confirm(`Are you sure you want to delete Room ${roomNumber}?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/Room?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (data.ok) {
+        fetchRooms();
+      } else {
+        alert(data.message || "Failed to delete room");
+      }
+    } catch (err) {
+      alert("Failed to delete room");
+    }
+  };
+
+  // Handle form submit (Create or Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
+    // If user entered image URL into input but didn't click '+', append it now
+    let finalImages = [...formData.images];
+    if (imageUrl.trim() && !finalImages.includes(imageUrl.trim())) {
+      finalImages.push(imageUrl.trim());
+    }
+
     try {
+      const method = editingRoom ? "PUT" : "POST";
+      const bodyPayload = {
+        ...(editingRoom ? { _id: editingRoom._id } : {}),
+        ...formData,
+        images: finalImages,
+        pricePerNight: Number(formData.pricePerNight),
+        maxOccupancy: Number(formData.maxOccupancy),
+      };
+
       const response = await fetch("/api/admin/Room", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          pricePerNight: Number(formData.pricePerNight),
-          maxOccupancy: Number(formData.maxOccupancy),
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await response.json();
@@ -184,10 +241,10 @@ export default function RoomManagement() {
         handleCloseModal();
         fetchRooms();
       } else {
-        alert(data.message || "Failed to create room");
+        alert(data.message || `Failed to ${editingRoom ? "update" : "create"} room`);
       }
     } catch (err) {
-      alert("Failed to create room");
+      alert(`Failed to ${editingRoom ? "update" : "create"} room`);
     } finally {
       setSubmitting(false);
     }
@@ -212,7 +269,7 @@ export default function RoomManagement() {
           </p>
         </div>
         <button
-          onClick={handleOpenModal}
+          onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm px-5 py-2.5 rounded-xl transition-all duration-200 shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_30px_rgba(245,158,11,0.35)]"
         >
           <Plus className="w-4 h-4" /> Add Room
@@ -263,7 +320,7 @@ export default function RoomManagement() {
           <BedDouble className="w-16 h-16 text-slate-700 mx-auto mb-4" />
           <p className="text-slate-400 mb-4">No rooms found</p>
           <button
-            onClick={handleOpenModal}
+            onClick={() => handleOpenModal()}
             className="text-amber-500 hover:text-amber-400 underline"
           >
             Add your first room
@@ -301,10 +358,23 @@ export default function RoomManagement() {
                   </span>
                 </div>
 
-                {/* More Options */}
-                <button className="absolute top-3 right-3 p-2 rounded-lg bg-slate-900/60 backdrop-blur-sm text-slate-400 hover:text-white transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+                {/* Edit & Delete Action Buttons */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                  <button
+                    onClick={() => handleOpenModal(room)}
+                    className="p-2 rounded-lg bg-slate-900/80 backdrop-blur-sm text-slate-300 hover:text-amber-400 border border-slate-700/60 transition-colors"
+                    title="Edit Room"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRoom(room._id, room.roomNumber)}
+                    className="p-2 rounded-lg bg-slate-900/80 backdrop-blur-sm text-slate-400 hover:text-red-400 border border-slate-700/60 transition-colors"
+                    title="Delete Room"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
 
                 {/* Price on Image */}
                 <div className="absolute bottom-3 right-3">
@@ -334,7 +404,7 @@ export default function RoomManagement() {
                   </div>
                 </div>
 
-                {/* Amenities */}
+                {/* Amenities & Image Count */}
                 <div className="flex items-center gap-2 pt-3 border-t border-slate-800/60">
                   {room.amenities.slice(0, 4).map((a) => {
                     const Icon = amenityIcons[a];
@@ -353,12 +423,12 @@ export default function RoomManagement() {
                       +{room.amenities.length - 4} more
                     </span>
                   )}
-                  {room.images.length > 1 && (
-                    <div className="ml-auto flex items-center gap-1 text-slate-500">
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span className="text-xs">{room.images.length}</span>
-                    </div>
-                  )}
+                  <div className="ml-auto flex items-center gap-1 text-slate-400">
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-xs font-semibold text-amber-400">
+                      {room.images?.length || 0} {room.images?.length === 1 ? 'img' : 'imgs'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -366,7 +436,7 @@ export default function RoomManagement() {
         </div>
       )}
 
-      {/* Add Room Modal */}
+      {/* Add / Edit Room Modal */}
       <dialog
         ref={dialogRef}
         className="bg-transparent backdrop:bg-black/70 backdrop:backdrop-blur-sm"
@@ -375,7 +445,9 @@ export default function RoomManagement() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
           {/* Modal Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Add New Room</h3>
+            <h3 className="text-xl font-bold text-white">
+              {editingRoom ? `Edit Room ${editingRoom.roomNumber}` : "Add New Room"}
+            </h3>
             <button
               onClick={handleCloseModal}
               className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
@@ -491,23 +563,23 @@ export default function RoomManagement() {
             {/* Images */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Room Images
+                Room Images (Paste URL & click + or Save)
               </label>
               <div className="flex gap-2 mb-3">
                 <input
                   type="url"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="Paste image URL..."
+                  placeholder="Paste image URL (https://...)..."
                   className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
                 />
                 <button
                   type="button"
                   onClick={handleAddImage}
                   disabled={!imageUrl.trim()}
-                  className="px-4 py-2.5 bg-slate-800 border border-slate-700/60 rounded-xl text-sm text-slate-300 hover:text-white hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2.5 bg-slate-800 border border-slate-700/60 rounded-xl text-sm text-slate-300 hover:text-white hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" /> Add
                 </button>
               </div>
 
@@ -544,7 +616,7 @@ export default function RoomManagement() {
                 </div>
               )}
               <p className="text-xs text-slate-500 mt-2">
-                First image will be used as the main display image
+                First image will be used as the main display image in rooms list
               </p>
             </div>
 
@@ -607,12 +679,12 @@ export default function RoomManagement() {
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
+                    {editingRoom ? "Updating..." : "Creating..."}
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    Add Room
+                    {editingRoom ? "Save Changes" : "Add Room"}
                   </>
                 )}
               </button>
@@ -623,3 +695,4 @@ export default function RoomManagement() {
     </div>
   );
 }
+
