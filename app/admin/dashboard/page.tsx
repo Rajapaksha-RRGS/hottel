@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     if (status === 'loading') return;
 
     if (status === 'unauthenticated') {
-      router.push('/Auth/login');
+      router.push('/login');
       return;
     }
 
