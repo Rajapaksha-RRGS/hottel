@@ -45,7 +45,7 @@ export async function PUT(
       );
     }
 
-    const validStatuses = ["Pending", "Served", "Billed"];
+    const validStatuses = ["Pending", "Served", "Billed", "Cancelled"];
     if (!validStatuses.includes(orderStatus)) {
       return NextResponse.json(
         {

@@ -38,8 +38,8 @@ export const authOptions: NextAuthOptions = {
           await connectDB();
 
           // Find user by email
-          const user = await User.findOne({ 
-            email: credentials.email.toLowerCase() 
+          const user = await User.findOne({
+            email: credentials.email.toLowerCase()
           }).select("+password");
 
           if (!user) {
@@ -88,7 +88,7 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 1 days
   },
 
   pages: {

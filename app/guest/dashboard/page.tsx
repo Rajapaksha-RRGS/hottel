@@ -207,9 +207,8 @@ export default function GuestDashboard() {
             </div>
             <div className="flex items-center gap-3">
               <span className={getStatusClass(activeBooking.status)}>
-                <span className={`w-2 h-2 rounded-full ${
-                  activeBooking.status === 'Checked-In' ? 'bg-green-400 availability-dot' : 'bg-gold'
-                }`} />
+                <span className={`w-2 h-2 rounded-full ${activeBooking.status === 'Checked-In' ? 'bg-green-400 availability-dot' : 'bg-gold'
+                  }`} />
                 {activeBooking.status}
               </span>
               <span className={getPaymentClass(activeBooking.paymentStatus)}>
@@ -227,10 +226,9 @@ export default function GuestDashboard() {
                   <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
-                      backgroundImage: `url(${
-                        activeBooking.room?.images?.[0] ||
+                      backgroundImage: `url(${activeBooking.room?.images?.[0] ||
                         'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-                      })`,
+                        })`,
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 to-transparent" />
@@ -357,7 +355,7 @@ export default function GuestDashboard() {
             Browse our rooms to plan your next luxurious stay.
           </p>
           <Link
-            href="/Rooms"
+            href="/room"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-charcoal font-medium text-sm uppercase tracking-wide hover:bg-gold-light transition-all rounded-lg group"
           >
             Explore Rooms

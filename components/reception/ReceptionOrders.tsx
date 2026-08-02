@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Coffee, Utensils, CheckCircle, Clock, RefreshCcw, Loader, BedDouble, Grid3x3 } from 'lucide-react';
-import { mockReceptionOrdersData } from '@/lib/mocks/receptionOrdersMock';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Coffee, CheckCircle, Clock, RefreshCcw, Loader2, BedDouble, Grid3x3, XCircle, AlertTriangle } from 'lucide-react';
 import { calculateAveragePrepTime } from '@/lib/prepTimeParser';
 
 export default function ReceptionOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [marking, setMarking] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'serve' | 'cancel' | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
-    // Auto-refresh every 30s — a kitchen board should never look stale
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -26,73 +26,73 @@ export default function ReceptionOrders() {
       if (json.success && json.data.pendingFoodOrders?.length > 0) {
         setOrders(json.data.pendingFoodOrders);
       } else {
-        setOrders(mockReceptionOrdersData.data?.pendingFoodOrders || []);
+        setOrders([]);
       }
     } catch (err) {
       console.error(err);
-      setOrders(mockReceptionOrdersData.data?.pendingFoodOrders || []);
+      setOrders([]);
     }
     setLoading(false);
   };
 
-  const markAsServed = async (orderId: string) => {
-    setMarking(orderId);
+  const updateOrderStatus = async (orderId: string, status: 'Served' | 'Cancelled') => {
+    const type = status === 'Served' ? 'serve' : 'cancel';
+    setActionId(orderId);
+    setActionType(type);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderStatus: 'Served' }),
+        body: JSON.stringify({ orderStatus: status }),
       });
       const json = await res.json();
 
       if (res.ok && json.success) {
-        console.log('✅ Order marked as served:', orderId);
         setOrders((prev) => prev.filter((o) => o._id !== orderId));
+        setConfirmCancel(null);
       } else {
-        const errorMsg = json.message || 'Failed to update order';
-        console.error('❌ Error:', errorMsg);
-        alert(`Error: ${errorMsg}`);
+        alert(`Error: ${json.message || 'Failed to update order'}`);
       }
     } catch (err) {
-      console.error('❌ Error marking order as served:', err);
-      alert('Failed to mark order as served. Please try again.');
+      console.error(`Error updating order:`, err);
+      alert('Failed to update order. Please try again.');
     } finally {
-      setMarking(null);
+      setActionId(null);
+      setActionType(null);
     }
   };
 
-  // Urgency color coding — the longer an order waits, the louder the card gets.
-  // This is the core scanability trick real KDS boards use.
   const getUrgency = (prepTime: number) => {
-    if (prepTime >= 25) return { border: 'border-red-500', badge: 'bg-red-500/20 text-red-400 border-red-500/30', dot: 'bg-red-500' };
-    if (prepTime >= 15) return { border: 'border-amber-500', badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30', dot: 'bg-amber-500' };
-    return { border: 'border-slate-800', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500' };
+    if (prepTime >= 25) return { border: 'rgba(239,68,68,0.4)', badge: 'bg-red-500/15 text-red-400', dot: 'bg-red-500' };
+    if (prepTime >= 15) return { border: 'rgba(251,191,36,0.3)', badge: 'bg-amber-500/15 text-amber-400', dot: 'bg-amber-500' };
+    return { border: 'rgba(255,255,255,0.06)', badge: 'bg-emerald-500/15 text-emerald-400', dot: 'bg-emerald-500' };
   };
 
   if (loading && orders.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-56 bg-slate-900 border-2 border-slate-800 rounded-2xl animate-pulse" />
+          <div key={i} className="h-60 rounded-2xl animate-pulse" style={{ background: '#151515', border: '1px solid rgba(255,255,255,0.06)' }} />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-white">Kitchen Orders</h2>
-          <p className="text-sm text-slate-400 mt-1">
-            {orders.length === 0 ? 'All caught up' : `${orders.length} order${orders.length === 1 ? '' : 's'} waiting`}
+          <h2 className="text-2xl font-bold text-white">Kitchen Orders</h2>
+          <p className="text-sm text-white/35 mt-1">
+            {orders.length === 0 ? 'All caught up — no pending orders' : `${orders.length} order${orders.length === 1 ? '' : 's'} waiting`}
           </p>
         </div>
         <button
           onClick={fetchData}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors text-sm font-bold border-2 border-slate-800 active:scale-95"
+          className="cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/40 hover:text-white transition-all active:scale-95"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -100,30 +100,39 @@ export default function ReceptionOrders() {
       </div>
 
       {/* Order Ticket Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {orders.length === 0 ? (
-          <div className="col-span-full p-14 text-center bg-slate-900 rounded-2xl border-2 border-slate-800">
-            <Coffee className="w-10 h-10 mx-auto mb-3 text-slate-600" />
-            <p className="text-slate-400 font-medium">No pending orders at the moment.</p>
+          <div className="col-span-full py-20 text-center rounded-2xl" style={{ background: '#151515', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Coffee className="w-12 h-12 mx-auto mb-4 text-white/15" />
+            <p className="text-white/35 font-medium text-base">No pending orders at the moment.</p>
+            <p className="text-white/20 text-sm mt-1">New orders will appear here automatically.</p>
           </div>
         ) : (
           orders.map((order: any, idx: number) => {
             const avgPrepTime = calculateAveragePrepTime(order.items.map((item: any) => item.foodItem) || []);
             const urgency = getUrgency(avgPrepTime);
             const isRoom = !!order.roomBookingId;
+            const isActioning = actionId === order._id;
+            const isCancelConfirm = confirmCancel === order._id;
 
             return (
               <motion.div
                 key={order._id}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.06 }}
-                className={`relative bg-slate-900 rounded-2xl overflow-hidden border-2 ${urgency.border} flex flex-col`}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: idx * 0.05 }}
+                className="relative rounded-2xl overflow-hidden flex flex-col"
+                style={{
+                  background: '#151515',
+                  border: `1px solid ${urgency.border}`,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                }}
               >
-                {/* Ticket header — table/room + live urgency badge */}
-                <div className="flex items-start justify-between p-4 pb-3 border-b-2 border-dashed border-slate-800">
+                {/* Ticket header */}
+                <div className="flex items-start justify-between p-5 pb-4" style={{ borderBottom: '1px dashed rgba(255,255,255,0.06)' }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       {isRoom ? (
                         <BedDouble className="w-5 h-5 text-sky-400" />
                       ) : (
@@ -131,15 +140,15 @@ export default function ReceptionOrders() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-white font-extrabold text-base leading-tight">
+                      <h3 className="text-white font-bold text-[16px] leading-tight">
                         {isRoom ? `Room ${order.roomBookingId?.room?.roomNumber || 'N/A'}` : `Table ${order.tableNumber || 'N/A'}`}
                       </h3>
-                      <p className="text-xs text-slate-400 font-medium">
+                      <p className="text-sm text-white/35 mt-0.5 font-medium">
                         {isRoom ? (order.roomBookingId?.guestName || 'Guest') : 'Dine-in'}
                       </p>
                     </div>
                   </div>
-                  <span className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1.5 rounded-lg border ${urgency.badge}`}>
+                  <span className={`flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg ${urgency.badge}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${urgency.dot} animate-pulse`} />
                     Pending
                   </span>
@@ -147,39 +156,94 @@ export default function ReceptionOrders() {
 
                 {/* Prep time */}
                 {avgPrepTime > 0 && (
-                  <div className="mx-4 mt-3 px-3 py-2 bg-slate-800/70 rounded-lg flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-bold text-slate-300">~{avgPrepTime} min prep</span>
+                  <div className="mx-5 mt-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <Clock className="w-4 h-4 text-white/30" />
+                    <span className="text-sm font-semibold text-white/50">~{avgPrepTime} min prep</span>
                   </div>
                 )}
 
                 {/* Items */}
-                <div className="flex-1 px-4 py-3 space-y-1.5">
+                <div className="flex-1 px-5 py-4 space-y-2">
                   {order.items.map((item: any, i: number) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-slate-300 font-medium">
-                        <span className="text-white font-extrabold">{item.quantity}×</span> {item.foodItem?.name || 'Unknown Item'}
+                      <span className="text-white/60 font-medium">
+                        <span className="text-white font-bold">{item.quantity}×</span> {item.foodItem?.name || 'Unknown Item'}
                       </span>
-                      <span className="text-slate-400 font-semibold">${item.subTotal.toFixed(2)}</span>
+                      <span className="text-white/35 font-semibold">${item.subTotal.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Footer — big total + big action button */}
-                <div className="flex items-center justify-between gap-3 p-4 pt-3 border-t-2 border-slate-800 bg-slate-800/30">
-                  <span className="text-emerald-400 font-extrabold text-xl">${order.totalBill.toFixed(2)}</span>
-                  <button
-                    onClick={() => markAsServed(order._id)}
-                    disabled={marking === order._id}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all text-sm font-extrabold active:scale-95"
-                  >
-                    {marking === order._id ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4" />
+                {/* Footer */}
+                <div className="p-5 pt-4 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                  {/* Total */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/30 text-sm font-medium">Order Total</span>
+                    <span className="text-emerald-400 font-bold text-xl">${order.totalBill.toFixed(2)}</span>
+                  </div>
+
+                  {/* Cancel confirmation */}
+                  <AnimatePresence>
+                    {isCancelConfirm && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-medium"
+                        style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+                      >
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span className="flex-1">Cancel this order?</span>
+                        <button
+                          onClick={() => updateOrderStatus(order._id, 'Cancelled')}
+                          disabled={isActioning}
+                          className="cursor-pointer px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/30 transition-all"
+                        >
+                          {isActioning && actionType === 'cancel' ? 'Cancelling...' : 'Yes, Cancel'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmCancel(null)}
+                          className="cursor-pointer px-3 py-1.5 rounded-lg text-white/40 text-xs font-bold hover:text-white transition-all"
+                          style={{ background: 'rgba(255,255,255,0.04)' }}
+                        >
+                          No
+                        </button>
+                      </motion.div>
                     )}
-                    {marking === order._id ? 'Marking...' : 'Mark Served'}
-                  </button>
+                  </AnimatePresence>
+
+                  {/* Action buttons */}
+                  {!isCancelConfirm && (
+                    <div className="flex gap-2.5">
+                      {/* Cancel */}
+                      <button
+                        onClick={() => setConfirmCancel(order._id)}
+                        disabled={isActioning}
+                        className="cursor-pointer flex items-center justify-center gap-2 flex-1 py-3 rounded-xl text-sm font-bold text-red-400/70 hover:text-red-400 transition-all active:scale-95 disabled:opacity-50"
+                        style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)' }}
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Cancel
+                      </button>
+
+                      {/* Mark Served */}
+                      <button
+                        onClick={() => updateOrderStatus(order._id, 'Served')}
+                        disabled={isActioning}
+                        className="cursor-pointer flex items-center justify-center gap-2 flex-[2] py-3 rounded-xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50"
+                        style={{
+                          background: isActioning && actionType === 'serve' ? 'rgba(16,185,129,0.3)' : 'linear-gradient(135deg, #10b981, #059669)',
+                          boxShadow: isActioning ? 'none' : '0 4px 16px rgba(16,185,129,0.3)',
+                        }}
+                      >
+                        {isActioning && actionType === 'serve' ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Marking...</>
+                        ) : (
+                          <><CheckCircle className="w-4 h-4" /> Mark Served</>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             );
